@@ -1,6 +1,8 @@
 ### 通用基础
 
-概念 数学 工具...
+>  数学 概念 工具...
+
+啥也不会 靠
 
 ##### Math
 
@@ -22,7 +24,7 @@ $$
 E(f(x)) x~p(X) = \sum_{i=1}^{n}{f(x)p(x)} \almostequal {1}/{n}
 $$
 
-##### RL基本概念
+##### RL Basic
 
 * Environment 环境
   * 接收Action, 提供Reward反馈
@@ -61,7 +63,7 @@ $$
       * TRPO: 引入 Trust Region
       * PPO: 
 
-##### Deep Learning 概念
+##### Deep Learning Basic
 
 * Loss & Gradient Descent
 
