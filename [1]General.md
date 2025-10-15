@@ -10,17 +10,15 @@
 
 * 全概率公式
 
-  * $\Bbb E_{x\backsim p(x)}(f(x)) \iff \displaystyle\sum_x p(x)f(x)$
-  * $\Bbb E$与$\sum$的互换
-
-* 蒙特卡洛特方法 *Monte Carlo Method*
+  * $\Bbb E_{x\backsim p(x)}(f(x)) \iff {\displaystyle\sum_x}p(x)f(x)~~~ \mathbb{E}与\sum的互换$
   
-  * 对于概率分布空间极大的求期望场景, 我们可以通过采样逼近期望值
+* **蒙特卡洛特方法 *Monte Carlo Method* **
+  * 对于分布空间极大的求期望场景, 我们可以通过采样*(Sampling)*逼近期望值
 
 
 $$
-E_{x\backsim p(x)}(f(x))= \sum_{x}{f(x)p(x)} \approx \frac{1}{N}\sum_{n=0}^{N-1}f(x^{(n)})\\
-e.g. \underbrace{\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]}_{\tau\backsim p_{\theta}(\tau)空间过大~基本无法求期望}\approx\frac{1}{N}\sum_{n=1}^{N}[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)]
+\sum_{x}{f(x)p(x)}=E_{x\backsim p(x)}(f(x)) \approx \frac{1}{N}\sum_{n=0}^{N-1}f(x^{(n)})\\
+e.g. \underbrace{\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]}_{\tau\backsim p_{\theta}(\tau)空间过大~基本无法求期望} \approx\frac{1}{N}\sum_{n=1}^{N}[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)]
 $$
 
 * $\epsilon-探索$
@@ -172,6 +170,8 @@ $S:状态空间;~A:动作空间;~R:奖励空间;~\pi: 策略,即Policy;~\theta:�
 
 ###### 值函数估计-发展路径
 
+$S{\times}A\rightarrow{\mathbb{R}}$
+
 * Q-Learning: $Q(s_t, a_t)$
   * 学习最优Q函数, 决策时, 选择能带来最大Q值的Action
   * 古早方法为通过Bellman迭代学习Q表格
@@ -193,6 +193,8 @@ $S:状态空间;~A:动作空间;~R:奖励空间;~\pi: 策略,即Policy;~\theta:�
   * 解决Q值估计过大问题
 
 ###### 策略搜索 $\pi(a_t|s_t)$-发展路径
+
+$S\rightarrow{A}$
 
 * Basic: 策略梯度 Policy Gradient
 
@@ -216,6 +218,8 @@ $S:状态空间;~A:动作空间;~R:奖励空间;~\pi: 策略,即Policy;~\theta:�
     
 
   * 理解: 参数θ优化的方向是使得总回报$G(\tau)$越大的轨迹$\tau$的概率$p_{\theta}(\tau)$也越大
+
+  * 后续都是基于这个式子进行各种优化-*雕花*
 
 * REINFORCE *Monte Carlo Policy Gradient*
 
@@ -267,4 +271,4 @@ $S:状态空间;~A:动作空间;~R:奖励空间;~\pi: 策略,即Policy;~\theta:�
 
 ###### RLHF
 
-* RL on Human Feedbacksx
+* RL on Human Feedbacks
