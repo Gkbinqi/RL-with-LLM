@@ -77,16 +77,19 @@ $S:状态空间;~A:动作空间;~R:奖励空间;~\pi_\theta: 策略,即Policy;~\
   * RL的目标: 学习到一个策略$\pi_{\theta}(a|s)$来最大化期望回报(expected return)
   * 与经典Supervised的区别
     * 对于输$s$, 没有人类可以提供的标签$a^*$, 需要agent自行探索
+    * supervised要求dataset独立同分布
+    * **(非常重要!)RL的样本既不独立也不同分布**
+      * **Sampling带来的后果, 根据目前Policy动态变化的Dataset**
+        * 之后会深入研究
 * 环境 Environment (Env)
-  * 与智能体交互的环境, 接收智能体的Action影响而改变State, 提供Reward反馈
+  * 与Agent交互的环境, 接收Agent的Action影响而改变State, 提供Reward反馈
   * 一般来说, Env类似黑箱, 其内部实现我们无法直接得知, 只能通过有限的接口和规则与其交互并观察其State和反馈(State改变以及Reward)
 * 智能体 Agent
   * 观察Env(Observation), 获得当前的State和Reward, 并进行学习和决策(选定Action)
-  * 一般来说, RL中训练Agent的目标为最大化预计能获得的Return(非单步reward, 而是预期整个过程能获得的总reward)
+  * 一般来说, RL中训练Agent的目标为最大化预计能获得的Return(非单步reward, 而是预期整个轨迹能获得的总reward)
 * 模型 Model
 
-    * 即Env的运行规律
-      * alias"环境动力学模型"
+    * 即Env的运行规律, alias "环境动力学模型"
       * RL里一般特指$Model = \{r(s,a,s'), p(s'|s,a)\}$
         * **状态转移概率** *Transition Function*: $p(s_{t+1}|s_t, a_t)$
           * $S\times A\rightarrow \Delta(S)$
@@ -103,7 +106,7 @@ $S:状态空间;~A:动作空间;~R:奖励空间;~\pi_\theta: 策略,即Policy;~\
         * 但也可以用一个网络进行模拟, 隐式得到
     * Model-Based/Model-Free: 区别在于环境知识的掌握程度
       * Model-Based: 显式使用Model中的函数
-      * Model-Free: 不依赖Model, 通过采样$(s,a,s',r)$进行学习
+      * Model-Free: 不知道/不依赖Model的实现, 通过采样$(s,a,s',r)$进行学习
 * **策略 Policy** $\pi_{\theta}(a|s)$
     * $S\rightarrow\Delta(A)$
     * 决定Agent在状态s下采取什么行动a
@@ -119,9 +122,9 @@ $S:状态空间;~A:动作空间;~R:奖励空间;~\pi_\theta: 策略,即Policy;~\
     * Agent根据当前State做出一个Action, Env接收Action转移到新状态s', 并反馈给Agent一个奖励
     * Reward是环境给Agent的奖惩反馈, 其定义会很大程度上影响模型的行为进而影响表现
 * 轨迹 Trajectory $\tau$
-    * 马尔可夫决策过程的一个轨迹（trajectory）
+    * MDP的一个轨迹（trajectory）
     * 例: $\tau = \{s_0, a_0, s_1, r_1(s_0, a_0, s_1), \cdots, s_{T-1}, a_{T-1}, s_T, r_T(s_{T-1}, a_{T-1}, s_T)\}$
-    * $\tau$的概率可以用策略选择和状态转移概率连乘表示
+    * 在参数$\theta$下特定路径$\tau$出现的概率可以用Policy和Transition Function连乘表示
       * $p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}$
 * 回报 Return
     * Agent和Env进行一次交互过程的轨迹$\tau$累积的Reward
@@ -215,16 +218,14 @@ $$
     * DQN解决了这个问题
 
 * DQN
-  
+
   > Deep Learning was introduced to RL from now on.
-  
+
   * 即使用深度网络来模拟Q函数, 解决$S{\times}A$空间过大问题
-    * 通过网络直接模拟非线性函数将$S{\times}A$空间映射到$\mathbb{R}$, 而无需维护一套映射表格/K-V对
+    * 通过网络直接模拟非线性函数将$S{\times}A$空间映射到$\mathbb{R}$, 而无需维护一套映射表格
   * Sampling+Bellman: $Q_{\pi_{\theta}}(s,a)=\underbrace{\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}}_{where~sampling~works}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
     * $\gamma \Bbb{E}_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]$部分在算法中会默认选择最优Action
       * 这里是对于离散有限动作域$A$, 可以直接带入所有Action选择Q最大的Action
-      * 对于连续/无限动作域, 用什么方法?
-        * 现在我也不知道.. DDPG?
     * 对于一次采样$(s,a,s',r)$
       * $target: r+\gamma {max}_{a'}Q_{\theta_k}(s',a')$
       * $loss: \frac{1}{2}[Q_{\theta_k}(s,a)-target]^2$
@@ -238,21 +239,26 @@ $$
       * 实践中即为Replay-Buffer: $(s,a,s',r)$
   * DQN系列现在仍然是很多RL问题的首选方法
     * 简单便宜
-  
-* Double Q
-  
-  * 解决Q值估计过大问题
+
+* Double Q, Dual Q: 更多的Q网络 解决过估计问题
+
 
 ###### 策略搜索 $\pi(a_t|s_t)$-发展路径
 
 $$
 Policy~Gradient~Series:S\rightarrow{A} \\
-需要注意的是, Policy~Gradient的搜索空间相比Q-Learning要小许多
+需要注意的是, Policy~Gradient的搜索空间相比Q-Learning要小许多\\
 $$
+
+* Benefits compared with Q-Learning
+
+  * $S\rightarrow{A}$, 更小的定义域, 更平滑的计算空间
 
 * 策略梯度 Policy Gradient
 
-  * 目标: optimize参数$\theta$来最大化期望总回报
+  * 直接用一个neural network $\theta$ 来模拟策略函数$\pi_\theta(a|s)$
+
+  * 目标: optimize参数$\theta$来最大化Expected Return
 
   * $$
     \begin{align}
@@ -268,19 +274,36 @@ $$
     	&\cdots &(余见PPO笔记, 纯练写公式了\ldots)\\
     	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T-1}G(\tau^n)\nabla_{\theta}\log \pi_{\theta}(a_t|s_t)
     \end{align}
-  $$
-    
+    $$
 
     
-  * 理解: 参数θ优化的方向是使得总回报$G(\tau)$越大的轨迹$\tau$的概率$p_{\theta}(\tau)$也越大
 
-  * 后续都是基于这个式子进行各种优化-*雕花*
+  * 理解: 参数θ优化的方向是使得$G(\tau)$越大的轨迹$\tau$的概率$p_{\theta}(\tau)$也越大
 
-* REINFORCE *Monte Carlo Policy Gradient*
+    * 显然, 对于$G(\tau^n)$, 有很多可优化的方法
+    * Tricks
+      * Baseline Reduction
+      * Temporal Dependency
+      * Variance Reduction
+      * $\cdots$
 
-* $\cal{[SOTA]}$ From TRPO *Trust Region Policy Optimization* to **PPO** *Proximal Policy Optimization*
+  * 后续都是基于此进行各种优化-*雕花*
 
-  * 
+* TRPO *Trust Region Policy Optimization*
+
+  * 对Sampling带来的不稳定问题的解决思想
+  * 选择方向上的最优策略+ KL-divergence 限制变化大小
+
+* $\cal{[exSOTA]}$ **PPO** *Proximal Policy Optimization*
+
+  * 对TRPO思想的可行实现
+  * 去除 KL-divergence, 直接用clip替代
+
+###### Problems About Sampling
+
+> RL的样本既不独立也不同分布
+
+
 
 ###### RLHF Series (RL on Human Feedbacks)
 
