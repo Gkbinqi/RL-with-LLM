@@ -19,7 +19,7 @@
   * $\Bbb E_{x\backsim p(x)}(f(x)) \iff {\displaystyle\sum_x}p(x)f(x)~~~ \mathbb{E}与\sum的互换$
   
 * **蒙特卡洛特方法 *Monte Carlo Method* **
-  * 对于分布空间极大的求期望场景, 我们可以通过采样*(Sampling)*逼近期望值
+  * 对于不知道确切分布的求期望场景, 我们可以通过采样*(Sampling)*逼近期望值
 
 
 $$
@@ -66,7 +66,14 @@ $$
 
 ##### RL Basic
 
-$S:状态空间;~A:动作空间;~R:奖励空间;~\pi_\theta: 策略,即Policy;~\theta:模型参数$
+$$
+S:状态空间;~A:动作空间;~R:奖励空间\\
+\pi_\theta(a|s): 策略,即Policy;~\theta:模型参数\\
+p(s'|s,a):状态转移概率;r(s,a,s'): 奖励函数\\
+\gamma: 折扣因子; \rm{H}:视距
+$$
+
+
 
 ###### 概念定义
 
@@ -79,7 +86,9 @@ $S:状态空间;~A:动作空间;~R:奖励空间;~\pi_\theta: 策略,即Policy;~\
     * 对于输$s$, 没有人类可以提供的标签$a^*$, 需要agent自行探索
     * supervised要求dataset独立同分布
     * **(非常重要!)RL的样本既不独立也不同分布**
-      * **Sampling带来的后果, 根据目前Policy动态变化的Dataset**
+      * **Sampling带来的后果, 根据目前Policy动态变化的Dataset, 而Dataset又改变了Policy**
+      * 后果: $\theta$的Graph是随着Sampling不断变化的
+      * 某次错误的Sampling和updates可能会给全局带来灾难性的后果
         * 之后会深入研究
 * 环境 Environment (Env)
   * 与Agent交互的环境, 接收Agent的Action影响而改变State, 提供Reward反馈
@@ -292,6 +301,7 @@ $$
 * TRPO *Trust Region Policy Optimization*
 
   * 对Sampling带来的不稳定问题的解决思想
+  * 由于sampling, $\theta$的Graph是不稳定的
   * 选择方向上的最优策略+ KL-divergence 限制变化大小
 
 * $\cal{[exSOTA]}$ **PPO** *Proximal Policy Optimization*
