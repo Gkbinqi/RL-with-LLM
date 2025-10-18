@@ -23,16 +23,27 @@
 
 
 $$
-\sum_{x}{p(x)f(x)}=E_{x\backsim p(x)}(f(x)) \approx \frac{1}{N}\sum_{n=0}^{N-1}f(x^{(n)})\\
-e.g. \underbrace{\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]}_{\tau\backsim p_{\theta}(\tau)空间过大~基本无法求期望} \approx\frac{1}{N}\sum_{n=1}^{N}[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)]
+\begin{align}
+\sum_{x}{p(x)f(x)}&=E_{x\backsim p(x)}(f(x)) \approx \frac{1}{N}\sum_{n=0}^{N-1}f(x^{(n)})\\
+e.g. \underbrace{\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]}_{\tau\backsim p_{\theta}(\tau)空间过大~基本无法求期望} &\approx\frac{1}{N}\sum_{n=1}^{N}[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)]
+\end{align}
 $$
 
-* $\epsilon-探索$
+* 重要性采样 
 
 $$
-\pi_{\theta}^{\epsilon}(s) = \begin{cases}\pi(s), & 按概率1-\epsilon, \\randomly~selected~action~in~A, & 按概率\epsilon.\end{cases}
-\\一般\epsilon会随着模型学习的积累逐渐减小
+\begin{align} E_{x\backsim p(x)}(f(x))
+&=\sum_{x\backsim p(x)}{p(x)f(x)}\\
+&=\sum_{x\backsim p(x)}{p(x)f(x)\frac{q(x)}{q(x)}}\\
+&=\sum_{x\backsim p(x)}{q(x)f(x)\frac{p(x)}{q(x)}}\\
+&=\sum_{x\backsim q(x)}{q(x)[f(x)\frac{p(x)}{q(x)}]}\\
+&=\mathbb{E_{x\backsim q(x)}}[f(x)\frac{p(x)}{q(x)}]
+\end{align}
 $$
+
+
+
+
 
 * KL散度 *KL diverge* $D_{KL}(P||Q)$
 
@@ -52,6 +63,17 @@ $$
 
     * 证明: Jensen不等式
 
+
+
+* $\epsilon-探索$
+
+$$
+\pi_{\theta}^{\epsilon}(s) = \begin{cases}\pi(s), & 按概率1-\epsilon, \\randomly~selected~action~in~A, & 按概率\epsilon.\end{cases}
+\\一般\epsilon会随着模型学习的积累逐渐减小
+$$
+
+
+
 ###### 离散相关
 
 * 笛卡尔集 Cartesian Product
@@ -60,20 +82,15 @@ $$
 * **马尔可夫决策过程** *Markov Decision process* (MDP)
   * 研究RL最常用数学模型
   * 该过程是**步骤独立**的, 状态间的转换仅取决于系统**当前的**状态, 而与系统过去或未来任意状态都独立不相关
+    * $p(s'|s,a)$状态转移的输入只需要当前的State和Action, 与之前任意步的State和Action无关
+    * 也可以理解为, 我们相信Env反馈的State域已经包含了我们所做的行为可能影响到的所有方面
   * 离散状态下被称为 *马尔可夫链*
     * 典型: 有A, B两种状态, 转换规则: 当前状态为[A]: to-A: 0.7, to-B: 0.3; [B]: to-A: 0.4, to-B: 0.6;
     * 状态转换概率仅取决于当前所处的状态
 
 ##### RL Basic
 
-$$
-S:状态空间;~A:动作空间;~R:奖励空间\\
-\pi_\theta(a|s): 策略,即Policy;~\theta:模型参数\\
-p(s'|s,a):状态转移概率;r(s,a,s'): 奖励函数\\
-\gamma: 折扣因子; \rm{H}:视距
-$$
-
-
+$S:状态空间;~A:动作空间;~R:奖励空间$
 
 ###### 概念定义
 
@@ -138,7 +155,7 @@ $$
 * 回报 Return
     * Agent和Env进行一次交互过程的轨迹$\tau$累积的Reward
     * 轨迹$\tau$的总回报: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
-      * 从$t_0$时刻开始计算的总回报: $G(\tau_{t_0})=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}$
+      * 从$t_0$时刻开始计算的总回报: $G(\tau_{t_0})=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}=r_{t_0+1}+G(\tau_{t_0+1})$
       * $\gamma\in[0,1]$为折扣率 discount rate
       * 当$\gamma\rightarrow 0$时，Agent更在意短期回报；而当$\gamma\rightarrow 1$时，长期回报变得更重要
 * 期望回报 Expected Return
@@ -175,87 +192,89 @@ $$
 
 * 动作值函数 Action-Value Function: $Q_\theta(s, a)$
   * $S\times A\rightarrow\mathbb R$
+  
   * 描述初始状态为s并进行动作a后，执行策略$\pi_{\theta}$得到的期望总回报。
+  
   * $Q_{\pi_{\theta}}(s,a)=\Bbb E_{\tau\backsim p(\tau)}[G(\tau)|\tau_{s_0} = s,\tau_{a_0}=a]$
-  * Bellman: $Q_{\pi_{\theta}}(s,a)=\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
+  
+  * Bellman: 
+  
+    * $$
+      Q_{\pi_{\theta}}(s,a)
+      \begin{align}
+      &=\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]\\
+      
+      &=\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma\sum_{a'\backsim \pi_{\theta}(a'|s')}\pi_\theta(a'|s')Q_{\pi_{\theta}}(s',a')]
+      
+      \end{align}
+      $$
+  
+      
   
 * Q&V 关系
   
     * $Q(s,a)=\Bbb E_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
-    * $V(s)=\mathbb E_{a\backsim \pi_{\theta}(a|s)}[Q(s,a)]$
+    * $V(s)=\mathbb E_{a\backsim \pi_{\theta}(a|s)}[Q(s,a)]=\sum_{a\backsim \pi_{\theta}(a|s)}\pi_{\theta}(a|s)Q(s,a)$
     * 也可代换入Bellman
     * 公式很美
     
 * 优势函数 Advantage Function: $A_\theta(s, a) = Q(s, a) - V(s)$
 
+    * 广义优势估计 GAE $A^{GAE}$
+        * 降低方差
+
 
 
 ##### RL方法概论
 
-###### 值函数估计-发展路径
+###### Value-Based Roadmap: $Q(s,a)$
 
-* Value Function
-  * $V_{\pi_{\theta}}(s) = \sum_{a\backsim\pi_{\theta}(a|s)}\pi_\theta(a|s)\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma V_{\pi_{\theta}}(s')]$ 
-  * 古早阶段简单环境下的方法, 由于简单环境, 已知$Model = \{r(s,a,s'), p(s'|s,a)\}$和所有state
-    * 知道Model才能数值计算Expectation
-  * 可以通过迭代的方式求出每个state的最佳Value Function
-    * $V^*(s)=max_{\pi_\theta}{\mathbb{E}_{\tau\backsim p_{\pi_\theta}(\tau)}}[\sum_{t=0}^{T-1}\gamma^tr(s_t,a_t,s_{t+1})|\pi_\theta,s_0=s]$
-    * Bellman-update
-    * 问题
-      * 实际情况, Env总是复杂不可知难以观测从满噪声的, Model不可得
-      * State空间往往巨大/连续, 遍历不可得
+* Monte-Carlo
+  * 即采样大量$\tau$, 通过轨迹中的样本进行逼近
+  * $Q(s,a)=\frac{1}{N}\sum_NG(\tau_t|s_t=s,a_t=a)$
 
 $$
-Q-Learning~Series: S{\times}A\rightarrow{\mathbb{R}}
+Q-Learning~Series: S{\times}A\rightarrow{\mathbb{R}}\\Temporal~Difference
 $$
 
 * Q-Learning
-
-  * 由于Model(特别是$p(s'|s,a)$)未知, 为了算期望, 我们只能通过Monte-Carlo进行近似
-    * 然而, $V^*(s)=max_{\pi_\theta}{\mathbb{E}_{\tau\backsim p_{\pi_\theta}(\tau)}}[\sum_{t=0}^{T-1}\gamma^tr(s_t,a_t,s_{t+1})|\pi_\theta,s_0=s]$在采样时存在问题
-      * $V^*(s)$的计算依赖于$\pi_\theta$, 而$\pi_\theta$决策又是通过$V^*(s)$进行
-      * 这导致每一次Sampling后的更新都可能改变$\pi_\theta$,而在不同$\pi_\theta$下计算的$V(s)$会有很大的差别
-      * 故, 使用在不同Policy下采样到的$V(s)$进行平均求期望实际上没有意义
-      * 通过Q函数, 将Action作为参数, 把Policy的影响排除在外
   * 学习最优Q函数, 相较于Value Function, 能更好的进行Sampling
+  * 用于离散$S$+离散$A$
   * Sampling+Bellman: $Q_{\pi_{\theta}}(s,a)=\underbrace{\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}}_{where~sampling~works}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
     * $\gamma \Bbb{E}_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]$部分在算法中会默认选择最优Action
+      * 对于离散有限动作域$A$, 可以直接带入所有Action选择Q最大的Action
     * 对于一次采样$(s,a,s',r)$
       * $target:r+\gamma {max}_{a'}Q_k(s',a')$
       * $update:Q_{k+1}(s,a)\leftarrow Q_k(s,a)+\alpha(target-Q_k(s,a))$
-  * 由于$S{\times}A$空间一般极大或无限, 传统Q表格的方式并不适用
-    * DQN解决了这个问题
 
 * DQN
 
   > Deep Learning was introduced to RL from now on.
 
-  * 即使用深度网络来模拟Q函数, 解决$S{\times}A$空间过大问题
+  * 即使用深度网络来模拟Q函数, 解决$S$空间过大/连续问题
     * 通过网络直接模拟非线性函数将$S{\times}A$空间映射到$\mathbb{R}$, 而无需维护一套映射表格
-  * Sampling+Bellman: $Q_{\pi_{\theta}}(s,a)=\underbrace{\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}}_{where~sampling~works}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
-    * $\gamma \Bbb{E}_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]$部分在算法中会默认选择最优Action
-      * 这里是对于离散有限动作域$A$, 可以直接带入所有Action选择Q最大的Action
-    * 对于一次采样$(s,a,s',r)$
-      * $target: r+\gamma {max}_{a'}Q_{\theta_k}(s',a')$
-      * $loss: \frac{1}{2}[Q_{\theta_k}(s,a)-target]^2$
-      * $GD: \theta_{k+1}\leftarrow \theta_k-\alpha\nabla_\theta[loss]|_{\theta=\theta_k}$
-  * 核心trick
-    * 目标网络冻结（freezing target networks），即在一个时间段内固定目标中的参数，来稳定学习目标
-      * 实际上会维护两个网络, main 和 target
+  * 适用于连续$S$+离散$A$
+  * 对于一次采样$(s,a,s',r)$
+    * $target: r+\gamma {max}_{a'}Q_{\theta_{target}}(s',a')$
+    * $loss: \frac{1}{2}[Q_{\theta_{main}}(s,a)-target]^2$
+    * $GD: \theta_{main}^{'}\leftarrow \theta_{main}-\alpha\nabla_\theta[loss]|_{\theta=\theta_k}$
+    * 左脚踩右脚上天
+  * 核心tricks
+    * 目标网络冻结 *freezing target networks*
+      * 实际上会维护两个网络, main 和 target, target网络哟关于提供计算loss时的target值
+      * 在一个时间段内target网络中的参数，来稳定学习目标
       * 对target使用多步更新或者软更新(soft update)
         * soft update: $\theta_{target}\leftarrow\theta_{traget}+\tau\theta_{main}(for~example,\tau~can~be~0.005)$
-    * 经验回放（experience replay），构建一个经验池来去除数据相关性。
+    * 经验回放 *experience replay*
+      * 构建一个经验池来去除数据相关性, 同时提高数据利用率
       * 实践中即为Replay-Buffer: $(s,a,s',r)$
-  * DQN系列现在仍然是很多RL问题的首选方法
-    * 简单便宜
 
-* Double Q, Dual Q: 更多的Q网络 解决过估计问题
+* Double Q, Dual Q: 更多的Q网络雕花 解决过估计问题
 
-
-###### 策略搜索 $\pi(a_t|s_t)$-发展路径
+###### Policy-Based Roadmap $\pi_\theta(a|s)$
 
 $$
-Policy~Gradient~Series:S\rightarrow{A} \\
+Policy~Gradient~Series:S\rightarrow{\Delta A} \\
 需要注意的是, Policy~Gradient的搜索空间相比Q-Learning要小许多\\
 $$
 
@@ -298,22 +317,39 @@ $$
 
   * 后续都是基于此进行各种优化-*雕花*
 
-* TRPO *Trust Region Policy Optimization*
+* $\cal{[Base]}$ TRPO *Trust Region Policy Optimization*
 
   * 对Sampling带来的不稳定问题的解决思想
-  * 由于sampling, $\theta$的Graph是不稳定的
-  * 选择方向上的最优策略+ KL-divergence 限制变化大小
+  * 使用新的loss等效替代PG的loss
+    * sur loss: $A^{GAE}$
+    * constraint: $D_{KL}(\theta|\theta^{'})<\epsilon$
 
 * $\cal{[exSOTA]}$ **PPO** *Proximal Policy Optimization*
 
-  * 对TRPO思想的可行实现
-  * 去除 KL-divergence, 直接用clip替代
+  * 对TRPO思想的可行实现, 分两个版本
+    * 条件约束下的求最优不适合用神经网络模拟, neural network更适合"直来直去"的问题
+  * PPO-penalty
+    * 将KL散度直接作为惩罚项加入到loss, 直接简化
+  * PPO-2(main used)
+    * 去除 KL-divergence, 不用算KL散度, 直接用clip替代
+    * KL散度其实不好算, 一般没有解析式只能进行数值计算
+  
+* DPO direct preference optimization
+
+* $\cal{[deepseek]}$ GRPO
 
 ###### Problems About Sampling
 
 > RL的样本既不独立也不同分布
 
+由于sampling, $\theta$的Graph是不稳定的
 
+Policy更新会影响采样结果, 而采样结果又会用于Policy更新
+
+此时若某一步出偏, 则可能带来灾难性的后果
+
+* 即, 整个策略更新的空间会被带入一个低价值空间
+* 掉悬崖下面去了
 
 ###### RLHF Series (RL on Human Feedbacks)
 
@@ -332,6 +368,8 @@ $$
 ##### Deep Learning Basic
 
 ###### Loss & Gradient Descent
+
+###### Bias & Variance
 
 
 
