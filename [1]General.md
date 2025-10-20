@@ -6,9 +6,12 @@
 
 体感上, RL领域的各种定义并没有一个标准化的规范, 大家只是"差不多这个意思"的进行讨论
 
-我尽量保证公式符号表示定义的一致连贯...
+我尽量保证公式符号表示定义的一致连贯
 
-对经典算法会进行代码demo实现, DQN, DDPG, Actor-Critic, PPO
+对经典算法会进行代码demo实现
+
+* DQN
+* PPO(doing...)
 
 ##### Math
 
@@ -31,7 +34,7 @@ e.g. \underbrace{\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\l
 \end{align}
 $$
 
-* 重要性采样 
+* 重要性采样
 
 $$
 \begin{align} E_{x\backsim p(x)}(f(x))
@@ -76,10 +79,13 @@ $$
 
 
 
+* 输赢概率--能力假设
+* 最大似然估计
+
 ###### 离散相关
 
 * 笛卡尔集 Cartesian Product
-* 离散数学内容, $A\times B$即A, B集合中所有元素 all to all 进行有序配对组成新集合
+  * 离散数学内容, $A\times B$即A, B集合中所有元素 all to all 进行有序配对组成新集合
   * $|A\times B| = |A|\times|B|$
 * **马尔可夫决策过程** *Markov Decision process* (MDP)
   * 研究RL最常用数学模型
@@ -87,10 +93,8 @@ $$
     * $p(s'|s,a)$状态转移的输入只需要当前的State和Action, 与之前任意步的State和Action无关
     * 也可以理解为, 我们相信Env反馈的State域已经包含了我们所做的行为可能影响到的所有方面
   * 离散状态下被称为 *马尔可夫链*
-    * 典型: 有A, B两种状态, 转换规则: 当前状态为[A]: to-A: 0.7, to-B: 0.3; [B]: to-A: 0.4, to-B: 0.6;
-    * 状态转换概率仅取决于当前所处的状态
 
-##### RL Basic
+##### RL 定义
 
 $S:状态空间;~A:动作空间;~R:奖励空间$
 
@@ -134,7 +138,7 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
         * 但也可以用一个网络进行模拟, 隐式得到
     * Model-Based/Model-Free: 区别在于环境知识的掌握程度
       * Model-Based: 显式使用Model中的函数
-      * Model-Free: 不知道/不依赖Model的实现, 通过采样$(s,a,s',r)$进行学习
+      * Model-Free: 没有关于Model的先验知识, 通过交互采样$(s,a,s',r)$进行学习
 * **策略 Policy** $\pi_{\theta}(a|s)$
     * $S\rightarrow\Delta(A)$
     * 决定Agent在状态s下采取什么行动a
@@ -157,7 +161,7 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
 * 回报 Return
     * Agent和Env进行一次交互过程的轨迹$\tau$累积的Reward
     * 轨迹$\tau$的总回报: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
-      * 从$t_0$时刻开始计算的总回报: $G(\tau_{t_0})=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}=r_{t_0+1}+G(\tau_{t_0+1})$
+      * 从$t_0$时刻开始计算的总回报: $G(\tau_{t_0})=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}=r_{t_0+1}+\gamma G(\tau_{t_0+1})$
       * $\gamma\in[0,1]$为折扣率 discount rate
       * 当$\gamma\rightarrow 0$时，Agent更在意短期回报；而当$\gamma\rightarrow 1$时，长期回报变得更重要
 * 期望回报 Expected Return
@@ -172,8 +176,8 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
 
   * $V_{\pi_{\theta}}(s) = \Bbb E_{\tau\backsim p_\theta(\tau)}[G(\tau)|\tau_{s_t} = s]$
 
-      * 因为 $p(s'|s, a)$实际上返回一个分布, 所以我们即使在相同s采取相同a, 得到的$s'$也可能不一样
-      * 因而即使输入固定的$s_0, \pi_{\theta}$, 每次交互的轨迹也可能不同, 因而求$V_{\pi_{\theta}}(s)$需要用$\mathbb{E}$--期望值
+      *  $\pi_\theta(a|s),p(s'|s, a)$返回的是概率分布
+      * 因此, 即使输入固定的$s_0, \pi_{\theta}$, 每次交互的轨迹也可能不同, 故求$V_{\pi_{\theta}}(s)$需要用$\mathbb{E}$--期望值
 
   * Bellman: $V_{\pi_{\theta}}(s) = \sum_{a\backsim\pi_{\theta}(a|s)}\pi_\theta(a|s)\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma V_{\pi_{\theta}}(s')]$ 
 
@@ -194,25 +198,26 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
 
 * 动作值函数 Action-Value Function: $Q_\theta(s, a)$
   * $S\times A\rightarrow\mathbb R$
-  
+
   * 描述初始状态为s并进行动作a后，执行策略$\pi_{\theta}$得到的期望总回报。
-  
+
   * $Q_{\pi_{\theta}}(s,a)=\Bbb E_{\tau\backsim p(\tau)}[G(\tau)|\tau_{s_0} = s,\tau_{a_0}=a]$
-  
+
   * Bellman: 
-  
-    * $$
-      Q_{\pi_{\theta}}(s,a)
+
+    * 
+      $$
       \begin{align}
+      Q_{\pi_{\theta}}(s,a)
       &=\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]\\
       
       &=\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma\sum_{a'\backsim \pi_{\theta}(a'|s')}\pi_\theta(a'|s')Q_{\pi_{\theta}}(s',a')]
       
       \end{align}
-      $$
-  
+    $$
       
-  
+      
+
 * Q&V 关系
   
     * $Q(s,a)=\Bbb E_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
@@ -222,43 +227,59 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
     
 * 优势函数 Advantage Function: $A_\theta(s, a) = Q(s, a) - V(s)$
 
+    * Multi-Step Temporal Difference
+    * 平衡Bias和Variance
     * 广义优势估计 GAE $A^{GAE}$
-        * 降低方差
 
+###### On-Policy & Off-Policy
 
+* 在线学习(同策略学习) On-Policy
+  * 采集数据用的Policy和训练的Policy是同一个
+  * 问题
+    * 大部分时间都在采集数据, 耗时长
+    * 数据只使用一次, 效率低
+* 离线学习(异策略学习) Off-Policy
+  * 采集数据用参考策略, 目标是训练另一个Policy
 
-##### RL方法概论
+##### RL 方法概论
 
 ###### Value-Based Roadmap: $Q(s,a)$
 
-* Monte-Carlo
-  * 即采样大量$\tau$, 通过轨迹中的样本进行逼近
-  * $Q(s,a)=\frac{1}{N}\sum_NG(\tau_t|s_t=s,a_t=a)$
+> 一般适用于离散有限动作域$A$
+>
+> 由于可选动作有限, 可以直接带入所有Action, 选择Q最大的Action即可
 
 $$
-Q-Learning~Series: S{\times}A\rightarrow{\mathbb{R}}\\Temporal~Difference
+Q-Learning~Series: S{\times}A\rightarrow{\mathbb{R}}\\
+Temporal~Difference: 时序差分
 $$
 
+* Pre
+  * Monte-Carlo
+    * 多步估计
+    * 高Variance, 低Bias
+  * 时序差分理解
+    * 单步间隔更新
+    * 打车比喻: 
+      * 每走一段进行一次更新
+      * 每次更新: 开始时预估应为的值(Q(s,a)) = 已确定发生时间(采样r(s,a,s'))+对剩余时间的预估(Q(s',a'))
+    * 低Variance, 高Bias
 * Q-Learning
-  * 学习最优Q函数, 相较于Value Function, 能更好的进行Sampling
+  * off-policy
   * 用于离散$S$+离散$A$
   * Sampling+Bellman: $Q_{\pi_{\theta}}(s,a)=\underbrace{\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}}_{where~sampling~works}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
     * $\gamma \Bbb{E}_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]$部分在算法中会默认选择最优Action
-      * 对于离散有限动作域$A$, 可以直接带入所有Action选择Q最大的Action
-    * 对于一次采样$(s,a,s',r)$
-      * $target:r+\gamma {max}_{a'}Q_k(s',a')$
-      * $update:Q_{k+1}(s,a)\leftarrow Q_k(s,a)+\alpha(target-Q_k(s,a))$
-
+  * 对于一步采样$(s,a,s',r)$
+    * $target:r+\gamma {max}_{a'}Q_k(s',a')$
+    * $update:Q_{k+1}(s,a)\leftarrow Q_k(s,a)+\alpha(target-Q_k(s,a))$
 * DQN
-
-  > Deep Learning was introduced to RL from now on.
-
-  * 即使用深度网络来模拟Q函数, 解决$S$空间过大/连续问题
-    * 通过网络直接模拟非线性函数将$S{\times}A$空间映射到$\mathbb{R}$, 而无需维护一套映射表格
-  * 适用于连续$S$+离散$A$
-  * 对于一次采样$(s,a,s',r)$
+  * off-policy
+  * 用于连续$S$+离散$A$
+  * 使用深度网络模拟Q函数, 解决$S$空间过大/连续问题
+    * 通过网络直接模拟非线性函数将$S{\times}A$空间映射到$\mathbb{R}$, 解决映射表格无法用于连续情况的问题
+  * 对于一步采样$(s,a,s',r)$
     * $target: r+\gamma {max}_{a'}Q_{\theta_{target}}(s',a')$
-    * $loss: \frac{1}{2}[Q_{\theta_{main}}(s,a)-target]^2$
+    * $loss:\frac{1}{2}[Q_{\theta_{main}}(s,a)-target]^2$
     * $GD: \theta_{main}^{'}\leftarrow \theta_{main}-\alpha\nabla_\theta[loss]|_{\theta=\theta_k}$
     * 左脚踩右脚上天
   * 核心tricks
@@ -270,75 +291,127 @@ $$
     * 经验回放 *experience replay*
       * 构建一个经验池来去除数据相关性, 同时提高数据利用率
       * 实践中即为Replay-Buffer: $(s,a,s',r)$
-
-* Double Q, Dual Q: 更多的Q网络雕花 解决过估计问题
+* Double Q, Dual Q: 更多的Q网络雕花 解决过估计等问题
 
 ###### Policy-Based Roadmap $\pi_\theta(a|s)$
 
 $$
-Policy~Gradient~Series:S\rightarrow{\Delta A} \\
-需要注意的是, Policy~Gradient的搜索空间相比Q-Learning要小许多\\
+Policy~Gradient~Series:S\rightarrow{\Delta (A)} \\
+需要注意的是,相比Q-Learning,Policy~Gradient有更小的定义域,更平滑的计算空间
 $$
-
-* Benefits compared with Q-Learning
-
-  * $S\rightarrow{A}$, 更小的定义域, 更平滑的计算空间
 
 * 策略梯度 Policy Gradient
 
-  * 直接用一个neural network $\theta$ 来模拟策略函数$\pi_\theta(a|s)$
-
+  * 直接用一个深度网络 $\theta$ 来模拟策略函数$\pi_\theta(a|s)$
   * 目标: optimize参数$\theta$来最大化Expected Return
 
-  * $$
-    \begin{align}
-        \nabla_{\theta}J(\theta)
-        &=\nabla_{\theta}\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]\\
-        &=\nabla_{\theta}\sum_{\tau}[G(\tau)p_{\theta}(\tau)]\\
-    	&=\sum_{\tau}[G(\tau)\nabla_{\theta}p_{\theta}(\tau)]\\
-    	&=\sum_{\tau}[G(\tau)\nabla_{\theta}p_{\theta}(\tau)\frac{p_{\theta}(\tau)}{p_{\theta}(\tau)}]\\
-    	&=\sum_{\tau}[(p_{\theta}(\tau))*G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]\\
-    	&=\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]&\sum\&\Bbb E变换\\
-    	&\approx\frac{1}{N}\sum_{n=0}^{N-1}[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)] &(Monte-Carlo)\\
-    	&\because p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}\\
-    	&\cdots &(余见PPO笔记, 纯练写公式了\ldots)\\
-    	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T-1}G(\tau^n)\nabla_{\theta}\log \pi_{\theta}(a_t|s_t)
-    \end{align}
-    $$
+  $$
+  \begin{align}
+      \nabla_{\theta}J(\theta)
+      &=\nabla_{\theta}\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]\\
+      &=\nabla_{\theta}\sum_{\tau}[G(\tau)p_{\theta}(\tau)]\\
+  	&=\sum_{\tau}[G(\tau)\nabla_{\theta}p_{\theta}(\tau)]\\
+  	&=\sum_{\tau}[G(\tau)\nabla_{\theta}p_{\theta}(\tau)\frac{p_{\theta}(\tau)}{p_{\theta}(\tau)}]&\nabla\log f(x)=\frac{\nabla f(x)}{f(x)}\\
+  	&=\sum_{\tau}[(p_{\theta}(\tau))*G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]\\
+  	&=\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]&\sum\&\Bbb E变换\\
+  	&\approx\frac{1}{N}\sum_{n=0}^{N-1}[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)] &(Monte-Carlo)\\
+  	&\because p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}\\
+  	&\cdots &(余见PPO笔记, 纯练写公式了\ldots)\\
+  	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G(\tau^n)\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
+  	&由于一个action只能影响其之后的reward, 优化G(\tau^n)项\\
+  	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)&(G_t^n=G(\tau_t^n))\\
+  	\theta'
+  	&\leftarrow\theta+\alpha\nabla J(\theta)&梯度上升\\
+  \end{align}
+  $$
 
-    
+  
 
-  * 理解: 参数θ优化的方向是使得$G(\tau)$越大的轨迹$\tau$的概率$p_{\theta}(\tau)$也越大
+  * 直观理解: 当$G_t^n>0$, $\theta$优化方向是使$\tau^n$中所有状态下采取当前决策$\pi_{\theta}(a_t^n|s_t^n)$的概率增大的方向
 
-    * 显然, 对于$G(\tau^n)$, 有很多可优化的方法
-    * Tricks
-      * Baseline Reduction
-      * Temporal Dependency
-      * Variance Reduction
-      * $\cdots$
+* REINFORCE
 
-  * 后续都是基于此进行各种优化-*雕花*
+  * on-policy
+  * 在策略$\pi_\theta$下采样N条轨迹
+  * $\nabla_{\theta}J(\theta)=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)$
+  * $\theta'\leftarrow\theta+\alpha\nabla J(\theta)$
+  * 重复进行直到收敛
+  * 实践中, 会定义loss为负数, 以便使用梯度下降工具
+    * $loss=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\log \pi_{\theta}(a_t^n|s_t^n)$
+    * $GD: \theta'\leftarrow\theta-\alpha\nabla loss$
+
+* Actor-Critic
+
+  * 结合了Policy和Q-Network
+  * 两个优化目标
+    * Policy: $maxQ(s,a)$
+    * Q: $min(Q-target)$
+      * 即一般DQN过程
+
+
+
+以下方法均采用了PG的思想和公式形式, 但是做出优化, 替换了loss计算
 
 * $\cal{[Base]}$ TRPO *Trust Region Policy Optimization*
 
+  $$
+  argmax_{\theta'}\mathbb{E_{s\backsim v_\theta,a\backsim\pi_\theta(a|s)}}[\frac{\pi_{\theta'}(a|s)}{\pi_{\theta}(a|s)}A_{\pi_\theta}(s,a)]\\ 
+  s.t.D_{KL}(\pi_\theta(a|s)||\pi_{\theta'}(a|s))<\epsilon
+  $$
+  
+
   * 对Sampling带来的不稳定问题的解决思想
+  * 限制步长 避免更新过度导致策略崩溃
+  * sur loss推导
+  * $J(\theta')-J(\theta)>0$
   * 使用新的loss等效替代PG的loss
     * sur loss: $A^{GAE}$
     * constraint: $D_{KL}(\theta|\theta^{'})<\epsilon$
+  * 问题
+
+    * Policy的KL散度不好算, 一般没有解析式只能进行数值计算
+    * DNN本身不适合限制问题
 
 * $\cal{[exSOTA]}$ **PPO** *Proximal Policy Optimization*
 
-  * 对TRPO思想的可行实现, 分两个版本
-    * 条件约束下的求最优不适合用神经网络模拟, neural network更适合"直来直去"的问题
+  * 对TRPO思想的可行实现
+
+  * 特点理解: 应该算on-policy, 但解决了on-policy的问题, 通过局部的off-policy化实现数据复用
+    * 使用当前$\theta$生成一组数据$\mathbb{D}$
+      * 全局on-policy
+    * 固定该$\theta$作为参考Policy, 复制训练Policy$\theta'$
+    * 使用$\mathbb{D}$对$\theta'$进行**多轮训练**, 该过程中, 固定原$\theta$进行重要性采样, 以此多次更新$\theta'$
+      * 局部off-policy化
+    * 重复至收敛
+    
+  * 公式推导 *从Policy Gradient Loss的替代优化到重要性采样*
+    $$
+    \begin{align}
+    \nabla_{\theta}J(\theta)
+        &=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
+    	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}(G_t^n-Base(s_t^n))\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
+    	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_\theta(s_t^n, a_t^n)\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
+    	&=引入重要性采样->单轮更新off-policy化\\
+    	&=clip处理\\
+    \end{align}
+    $$
+    
+
+    * 
+
   * PPO-penalty
+    
     * 将KL散度直接作为惩罚项加入到loss, 直接简化
-  * PPO-2(main used)
+    
+  * PPO-clip(PPO-2, mainly used)
+    
     * 去除 KL-divergence, 不用算KL散度, 直接用clip替代
-    * KL散度其实不好算, 一般没有解析式只能进行数值计算
-  
-* DPO direct preference optimization
 
 * $\cal{[deepseek]}$ GRPO
+
+###### RLHF Series (RL on Human Feedbacks)
+
+* DPO
 
 ###### Problems About Sampling
 
@@ -353,19 +426,7 @@ Policy更新会影响采样结果, 而采样结果又会用于Policy更新
 * 即, 整个策略更新的空间会被带入一个低价值空间
 * 掉悬崖下面去了
 
-###### RLHF Series (RL on Human Feedbacks)
 
-* RLHF
-* DPO
-* GRPO
-
-###### Actor-Critic
-
-###### On-Policy & Off-Policy
-
-* On-Policy
-  * 采集数据用的Policy和训练的Policy是同一个
-* Off-Policy
 
 ##### Deep Learning Basic
 
@@ -373,30 +434,12 @@ Policy更新会影响采样结果, 而采样结果又会用于Policy更新
 
 ###### Bias & Variance
 
-
-
-###### 正则化 Normalization
-
-
+正则化 Normalization
 
 ###### entropy: 熵 & 交叉熵
 
-
-
 ###### Attention
 
-
-
-###### Transformer
-
-
+Transformer
 
 ###### VAE
-
-
-
-##### With LLM
-
-###### RLHF
-
-* RL on Human Feedbacks
