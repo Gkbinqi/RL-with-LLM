@@ -11,7 +11,7 @@
 对经典算法会进行代码demo实现
 
 * DQN
-* PPO(doing...)
+* PPO & PPO-on-LLM
 
 ##### Math
 
@@ -37,18 +37,16 @@ $$
 * 重要性采样
 
 $$
-\begin{align} E_{x\backsim p(x)}(f(x))
-&=\sum_{x\backsim p(x)}{p(x)f(x)}\\
-&=\sum_{x\backsim p(x)}{p(x)f(x)\frac{q(x)}{q(x)}}\\
-&=\sum_{x\backsim p(x)}{q(x)f(x)\frac{p(x)}{q(x)}}\\
-&=\sum_{x\backsim q(x)}{q(x)[f(x)\frac{p(x)}{q(x)}]}\\
-&=\mathbb{E_{x\backsim q(x)}}[f(x)\frac{p(x)}{q(x)}]
+\begin{align} 
+E_{x\backsim p(x)}(f(x))
+	&=\sum_{x\backsim p(x)}{p(x)f(x)}\\
+	&=\sum_{x\backsim p(x)}{p(x)f(x)\frac{q(x)}{q(x)}}\\
+	&=\sum_{x\backsim p(x)}{q(x)f(x)\frac{p(x)}{q(x)}}\\
+	&=\sum_{x\backsim q(x)}{q(x)[f(x)\frac{p(x)}{q(x)}]}\\
+	&=\mathbb{E_{x\backsim q(x)}}[f(x)\frac{p(x)}{q(x)}]\\
+	&\approx\frac{1}{N}\sum_{n=0}^{N-1}[f(x)\frac{p(x)}{q(x)}]_{x\backsim q(x)}\\
 \end{align}
 $$
-
-
-
-
 
 * KL散度 *KL diverge* $D_{KL}(P||Q)$
 
@@ -67,17 +65,20 @@ $$
   * 恒大于等于0, 当且仅当P,Q同分布时为0
 
     * 证明: Jensen不等式
-
-
+    
+  * 正反向KL的区别
 
 * $\epsilon-探索$
 
 $$
-\pi_{\theta}^{\epsilon}(s) = \begin{cases}\pi(s), & 按概率1-\epsilon, \\randomly~selected~action~in~A, & 按概率\epsilon.\end{cases}
-\\一般\epsilon会随着模型学习的积累逐渐减小
+\pi_{\theta}^{\epsilon}(s) = 
+\begin{cases}
+	\pi(s), & \text{按概率1-$\epsilon$} \\
+	randomly~selected~action~in~A, & \text{按概率$\epsilon$}\\
+\end{cases}\\
+
+一般\epsilon会随着模型学习的积累逐渐减小
 $$
-
-
 
 * 输赢概率--能力假设
 * 最大似然估计
@@ -227,19 +228,53 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
     
 * 优势函数 Advantage Function: $A_\theta(s, a) = Q(s, a) - V(s)$
 
-    * Multi-Step Temporal Difference
     * 平衡Bias和Variance
-    * 广义优势估计 GAE $A^{GAE}$
+    * 对$A_\theta$的进一步优化: 广义优势估计 $A^{GAE}_\theta$ *General Average Estimation*
+
+    $$
+    \begin{align}
+    \because Q(s,a)&=\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]\\
+    A_\theta(s, a)
+    	&= Q(s, a) - V(s)\\
+    	&= \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')-V(s)]\\
+    对A_\theta进行多步采样\\
+    \because 在采样中, V(s_{t+1})&\approx r_{t+2}+\gamma V(s_{t+2})\\
+    A^1_\theta(s_t,a)&=r_{t+1}+\gamma V_\theta(s_{t+1})-V_\theta(s_t)\\
+    A^2_\theta(s_t,a)&=r_{t+1}+\gamma r_{t+2}+\gamma^2V_\theta(s_{t+2})-V_\theta(s_t)\\
+    A^3_\theta(s_t,a)&=r_{t+1}+\gamma r_{t+2}+\gamma^2r_{t+3}+\gamma^3V_\theta(s_{t+3})-V_\theta(s_t)\\
+    \vdots\\
+    A^T_\theta(s_t,a)&=r_{t+1}+\gamma^1r_{t+2}+\cdots+\gamma^{T-1}r_{t+T}+\gamma^TV_\theta(s_{t+T})-V_\theta(s_t)\\
+    定义:\delta^V_t(s_t,a)&=r_{t+1}+\gamma V_\theta(s_{t+1})-V_\theta(s_t)\\
+    \delta^V_{t+1}(s_{t+1},a)&=r_{t+2}+\gamma V_\theta(s_{t+2})-V_\theta(s_{t+1})\\
+    简写为\delta^V_t-&\text{表示第t步采取动作a在该步视角下带来的优势}\\
+    
+    
+    定义:A^{GAE}_\theta
+    	&=(1-\lambda)(A^1_\theta+\lambda A^2_\theta+\lambda^2A^3_\theta+\cdots)\\
+    	&=(1-\lambda)(\delta^V_t+\lambda(\delta^V_t+\gamma\delta^V_{t+1})+\lambda^2(\delta^V_t+\gamma\delta^V_{t+1}+\gamma^2\delta^V_{t+2}))+\cdots)\\
+    	&=(1-\lambda)(\delta^V_t(1+\lambda+\lambda^2+\cdots)+\gamma\delta^V_{t+1}(\lambda+\lambda^2+\cdots)+\cdots)\\
+    	&=(1-\lambda)(\delta^V_t\frac{1}{1-\lambda}+\gamma\delta^V_{t+1}\frac{\lambda}{1-\lambda}+\cdots)&\lambda^n\rightarrow0\\
+    	&=\sum_{b=0}^\infty(\gamma\lambda)^b\delta^V_{t+b}
+    \end{align}
+    $$
+
+    * 表示在状态$s_t$时做动作a带来的优势
+      * Multi-Step Temporal Difference
+      * 通过调整$\lambda$平衡了采样不同步带来的方差&偏差的平衡问题
 
 ###### On-Policy & Off-Policy
 
 * 在线学习(同策略学习) On-Policy
   * 采集数据用的Policy和训练的Policy是同一个
+    * 使用$\theta$生成一组数据$\mathbb{D}$, 然后用$\mathbb{D}$更新$\theta$本身为$\theta'$, 然后用$\theta'$重复该过程
+    * 训练$\theta'$时原来的$\mathbb{D}$会被丢弃, 需要重新用$\theta'$生成$\mathbb{D'}$
   * 问题
     * 大部分时间都在采集数据, 耗时长
-    * 数据只使用一次, 效率低
+    * 数据只会使用一次, 效率低
 * 离线学习(异策略学习) Off-Policy
   * 采集数据用参考策略, 目标是训练另一个Policy
+    * 使用$\theta_{ref}$生成$\mathbb{D}$, 然后用$\mathbb{D}$更新目标策略$\theta$
+  * 一般数据可以多次复用
 
 ##### RL 方法概论
 
@@ -264,12 +299,12 @@ $$
       * 每走一段进行一次更新
       * 每次更新: 开始时预估应为的值(Q(s,a)) = 已确定发生时间(采样r(s,a,s'))+对剩余时间的预估(Q(s',a'))
     * 低Variance, 高Bias
+    * Q-Learning, DQN
 * Q-Learning
-  * off-policy
   * 用于离散$S$+离散$A$
   * Sampling+Bellman: $Q_{\pi_{\theta}}(s,a)=\underbrace{\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}}_{where~sampling~works}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
     * $\gamma \Bbb{E}_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]$部分在算法中会默认选择最优Action
-  * 对于一步采样$(s,a,s',r)$
+  * 对于一步采样$(s,a,s',r)$(数据可复用, off-policy)
     * $target:r+\gamma {max}_{a'}Q_k(s',a')$
     * $update:Q_{k+1}(s,a)\leftarrow Q_k(s,a)+\alpha(target-Q_k(s,a))$
 * DQN
@@ -278,8 +313,8 @@ $$
   * 使用深度网络模拟Q函数, 解决$S$空间过大/连续问题
     * 通过网络直接模拟非线性函数将$S{\times}A$空间映射到$\mathbb{R}$, 解决映射表格无法用于连续情况的问题
   * 对于一步采样$(s,a,s',r)$
-    * $target: r+\gamma {max}_{a'}Q_{\theta_{target}}(s',a')$
-    * $loss:\frac{1}{2}[Q_{\theta_{main}}(s,a)-target]^2$
+    * $TD target: r+\gamma {max}_{a'}Q_{\theta_{target}}(s',a')$
+    * $loss:\frac{1}{2}[Q_{\theta_{main}}(s,a)-TD]^2$
     * $GD: \theta_{main}^{'}\leftarrow \theta_{main}-\alpha\nabla_\theta[loss]|_{\theta=\theta_k}$
     * 左脚踩右脚上天
   * 核心tricks
@@ -291,6 +326,7 @@ $$
     * 经验回放 *experience replay*
       * 构建一个经验池来去除数据相关性, 同时提高数据利用率
       * 实践中即为Replay-Buffer: $(s,a,s',r)$
+      * 数据可复用, 典型的off-policy
 * Double Q, Dual Q: 更多的Q网络雕花 解决过估计等问题
 
 ###### Policy-Based Roadmap $\pi_\theta(a|s)$
@@ -328,14 +364,18 @@ $$
   
 
   * 直观理解: 当$G_t^n>0$, $\theta$优化方向是使$\tau^n$中所有状态下采取当前决策$\pi_{\theta}(a_t^n|s_t^n)$的概率增大的方向
+  * 对$G_t^n$可采取多种优化, 衍生出不同算法中的Loss
+    * $G_t^n-Base(s_t^n)$
+    * $A^{GAE}_\theta(s,a)$
+    * 时序差分
 
 * REINFORCE
 
-  * on-policy
-  * 在策略$\pi_\theta$下采样N条轨迹
-  * $\nabla_{\theta}J(\theta)=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)$
-  * $\theta'\leftarrow\theta+\alpha\nabla J(\theta)$
-  * 重复进行直到收敛
+  * 算法
+    * 在策略$\pi_\theta$下采样N条轨迹(典型的on-policy)
+    * $计算梯度:\nabla_{\theta}J(\theta)=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)$
+    * $Gradient~Ascent:\theta'\leftarrow\theta+\alpha\nabla J(\theta)$
+    * 重复至收敛
   * 实践中, 会定义loss为负数, 以便使用梯度下降工具
     * $loss=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\log \pi_{\theta}(a_t^n|s_t^n)$
     * $GD: \theta'\leftarrow\theta-\alpha\nabla loss$
@@ -343,14 +383,11 @@ $$
 * Actor-Critic
 
   * 结合了Policy和Q-Network
+  * 可解决$A$无限的问题
   * 两个优化目标
     * Policy: $maxQ(s,a)$
     * Q: $min(Q-target)$
       * 即一般DQN过程
-
-
-
-以下方法均采用了PG的思想和公式形式, 但是做出优化, 替换了loss计算
 
 * $\cal{[Base]}$ TRPO *Trust Region Policy Optimization*
 
@@ -358,54 +395,71 @@ $$
   argmax_{\theta'}\mathbb{E_{s\backsim v_\theta,a\backsim\pi_\theta(a|s)}}[\frac{\pi_{\theta'}(a|s)}{\pi_{\theta}(a|s)}A_{\pi_\theta}(s,a)]\\ 
   s.t.D_{KL}(\pi_\theta(a|s)||\pi_{\theta'}(a|s))<\epsilon
   $$
-  
 
-  * 对Sampling带来的不稳定问题的解决思想
-  * 限制步长 避免更新过度导致策略崩溃
-  * sur loss推导
-  * $J(\theta')-J(\theta)>0$
-  * 使用新的loss等效替代PG的loss
-    * sur loss: $A^{GAE}$
-    * constraint: $D_{KL}(\theta|\theta^{'})<\epsilon$
-  * 问题
+    * 对Sampling带来的不稳定问题的解决思想
 
-    * Policy的KL散度不好算, 一般没有解析式只能进行数值计算
-    * DNN本身不适合限制问题
+        * 限制步长 避免更新过度导致策略崩溃
+
+    * surrogate loss推导
+      $$
+      J(\theta')-J(\theta)>0
+      $$
+
+      * 优势函数的让人容易接受的推导方式
+
+    * 使用新的loss等效替代PG的loss
+      * surrogate loss: $A^{GAE}$
+      * constraint: $D_{KL}(\theta|\theta^{'})<\epsilon$
+
+    * 问题
+
+      * Policy的KL散度不好算, 一般没有解析式只能进行数值计算
+      * DNN本身不适合限制问题
 
 * $\cal{[exSOTA]}$ **PPO** *Proximal Policy Optimization*
 
   * 对TRPO思想的可行实现
 
-  * 特点理解: 应该算on-policy, 但解决了on-policy的问题, 通过局部的off-policy化实现数据复用
-    * 使用当前$\theta$生成一组数据$\mathbb{D}$
-      * 全局on-policy
-    * 固定该$\theta$作为参考Policy, 复制训练Policy$\theta'$
-    * 使用$\mathbb{D}$对$\theta'$进行**多轮训练**, 该过程中, 固定原$\theta$进行重要性采样, 以此多次更新$\theta'$
-      * 局部off-policy化
-    * 重复至收敛
-    
+  * 特点理解: 总体上为on-policy, 通过局部的off-policy化实现数据复用解决训练效率问题
+    * $\theta$生成本轮数据$\mathbb{D}$并复制参考Policy$\theta'\leftarrow\theta$, 固定$\theta'$进行重要性采样, 使用$\mathbb{D}$对$\theta$进行**多轮训练**
+    * 局部off-policy化, $\theta'$作为参考策略
+
   * 公式推导 *从Policy Gradient Loss的替代优化到重要性采样*
     $$
     \begin{align}
     \nabla_{\theta}J(\theta)
         &=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
     	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}(G_t^n-Base(s_t^n))\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
-    	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_\theta(s_t^n, a_t^n)\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
-    	&=引入重要性采样->单轮更新off-policy化\\
-    	&=clip处理\\
+    	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A_\theta(s_t^n, a_t^n)\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)&内涵一致,替换为A_\theta\\
+    	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_\theta(s_t^n, a_t^n)\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)&引入A^{GAE}_\theta优化方差偏差\\
+    	&引入重要性采样,局部off-policy化\\
+    	&\theta:Training-Policy;\theta':Ref-Policy\\
+    	&此时使用的轨迹数据由\theta'采样得到\\
+    	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_{\theta'}(s_t^n, a_t^n)\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
+    	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_{\theta'}(s_t^n, a_t^n)\frac{\nabla_{\theta}\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}&\nabla\log f(x)=\frac{\nabla f(x)}{f(x)}\\
     \end{align}
     $$
-    
 
-    * 
+  * Loss处理
+    $$
+    \begin{align}
+    Loss
+    	&=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_{\theta'}(s_t^n, a_t^n)\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}\\
+    	&引入TRPO的限制思想,采用PPO2进行处理\\
+    	&=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}\min({A^{GAE}_{\theta'}\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}},{clip(\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)},1-\epsilon, 1+\epsilon)}A^{GAE}_{\theta'})\\
+    \end{align}
+    $$
 
-  * PPO-penalty
-    
-    * 将KL散度直接作为惩罚项加入到loss, 直接简化
-    
-  * PPO-clip(PPO-2, mainly used)
-    
-    * 去除 KL-divergence, 不用算KL散度, 直接用clip替代
+  * 训练实现
+
+    * 模型: Policy模型&价值模型
+    * Loss GD过程:
+    * 使用当前$\theta$生成一组数据$\mathbb{D}$
+      * 全局on-policy
+    * 固定该$\theta$作为参考Policy, 复制训练Policy$\theta'$
+    * 使用$\mathbb{D}$对$\theta'$进行**多轮训练**, 该过程中, 固定原$\theta$作为参考策略进行重要性采样, 以此多次更新$\theta'$
+      * 局部off-policy化
+    * 重复至收敛
 
 * $\cal{[deepseek]}$ GRPO
 
@@ -417,16 +471,20 @@ $$
 
 > RL的样本既不独立也不同分布
 
-由于sampling, $\theta$的Graph是不稳定的
+* Graph不稳定
+  * 由于sampling, $\theta$的Graph是不稳定的
+  * Policy更新会影响采样结果, 而采样结果又会用于Policy更新, 此时若某一步出偏, 则可能带来灾难性的后果
+  * 即, 整个策略更新的空间会被带入一个低价值空间
+  * 掉悬崖下面去了
 
-Policy更新会影响采样结果, 而采样结果又会用于Policy更新
-
-此时若某一步出偏, 则可能带来灾难性的后果
-
-* 即, 整个策略更新的空间会被带入一个低价值空间
-* 掉悬崖下面去了
-
-
+* 采样步数 & Bias&Variance问题
+  * 采样步数越多
+    * 真实样本更多
+    * 方差越大: 
+    * 偏差越小: 越多的数据直接来自采样得到的真实结果, 估计与真实间的差距越小
+  * 采样步数越少
+    * 方差越小: 两次估计间间隔小, 直接更新(?)
+    * 偏差越大: 引入的数据少
 
 ##### Deep Learning Basic
 
@@ -434,12 +492,12 @@ Policy更新会影响采样结果, 而采样结果又会用于Policy更新
 
 ###### Bias & Variance
 
-正则化 Normalization
+###### 正则化 Normalization
 
 ###### entropy: 熵 & 交叉熵
 
 ###### Attention
 
-Transformer
+###### Transformer
 
 ###### VAE
