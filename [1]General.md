@@ -10,8 +10,9 @@
 
 对经典算法会进行代码demo实现
 
-* DQN
-* PPO & PPO-on-LLM
+* PPO
+* PPO-on-LLM
+* GRPO(todo)
 
 ##### Math
 
@@ -50,24 +51,22 @@ $$
 
 * KL散度 *KL diverge* $D_{KL}(P||Q)$
 
-  > 详解见BV1r6jHzpE1J
-
   * $$
-    用分布Q近似分布P: D_{KL}(P||Q) = \begin{cases}
+  用分布Q近似分布P: D_{KL}(P||Q) = \begin{cases}
     \displaystyle\sum_xP(x)\log\frac{P(x)}{Q(x)},&离散\\
     \displaystyle\int P(x)\log\frac{P(x)}{Q(x)}dx,&连续
     
     \end{cases}
     $$
-
+  
   * 描述两个分布的差别
 
   * 恒大于等于0, 当且仅当P,Q同分布时为0
 
     * 证明: Jensen不等式
-    
+  
   * 正反向KL的区别
-
+  
 * $\epsilon-探索$
 
 $$
@@ -140,10 +139,11 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
     * Model-Based/Model-Free: 区别在于环境知识的掌握程度
       * Model-Based: 显式使用Model中的函数
       * Model-Free: 没有关于Model的先验知识, 通过交互采样$(s,a,s',r)$进行学习
-* **策略 Policy** $\pi_{\theta}(a|s)$
+* **策略 Policy** $\pi_{\theta}(a|s);a=\mu_\theta(s)$
     * $S\rightarrow\Delta(A)$
     * 决定Agent在状态s下采取什么行动a
-    * 同样的, s导向一个**a的分布**, 不一定总是某个确定的动作
+    * 同样的, $\pi_\theta(a|s)$输出一个**a的分布**, 不一定总是某个确定的动作
+    * 也有**确定性策略**, 表示为$a= \mu_\theta(s):S{\rightarrow}A$
 * 状态 State
   * Env给Agent反馈的状态
   * Observation: State的子集(或者说, 残缺信息, Ob也可能是State的低维观察信息), 因为Agent未必能获得全部的State, 有时其只能获得Ob到的部分真实State信息, 并且可能有噪声(如: 超agent感知范围, 感知结构) 
@@ -278,6 +278,14 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
 
 ##### RL 方法概论
 
+###### 通用架构
+
+* 时序差分 Temporal Difference
+  * 基于单步采样, 逐步引入真实信息
+
+* Actor-Critic
+  * 可解决$A$无限的问题
+
 ###### Value-Based Roadmap: $Q(s,a)$
 
 > 一般适用于离散有限动作域$A$
@@ -380,15 +388,6 @@ $$
     * $loss=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\log \pi_{\theta}(a_t^n|s_t^n)$
     * $GD: \theta'\leftarrow\theta-\alpha\nabla loss$
 
-* Actor-Critic
-
-  * 结合了Policy和Q-Network
-  * 可解决$A$无限的问题
-  * 两个优化目标
-    * Policy: $maxQ(s,a)$
-    * Q: $min(Q-target)$
-      * 即一般DQN过程
-
 * $\cal{[Base]}$ TRPO *Trust Region Policy Optimization*
 
   $$
@@ -421,8 +420,8 @@ $$
   * 对TRPO思想的可行实现
 
   * 特点理解: 总体上为on-policy, 通过局部的off-policy化实现数据复用解决训练效率问题
-    * $\theta$生成本轮数据$\mathbb{D}$并复制参考Policy$\theta'\leftarrow\theta$, 固定$\theta'$进行重要性采样, 使用$\mathbb{D}$对$\theta$进行**多轮训练**
-    * 局部off-policy化, $\theta'$作为参考策略
+    * $\theta$生成本轮数据$\mathbb{D}$并作为参考Policy进行重要性采样, 使用$\mathbb{D}$对$\theta$进行**多轮训练**
+    * 局部off-policy化, 用最开始的$\theta$作为参考策略
 
   * 公式推导 *从Policy Gradient Loss的替代优化到重要性采样*
     $$
@@ -452,14 +451,17 @@ $$
 
   * 训练实现
 
-    * 模型: Policy模型&价值模型
-    * Loss GD过程:
-    * 使用当前$\theta$生成一组数据$\mathbb{D}$
-      * 全局on-policy
-    * 固定该$\theta$作为参考Policy, 复制训练Policy$\theta'$
-    * 使用$\mathbb{D}$对$\theta'$进行**多轮训练**, 该过程中, 固定原$\theta$作为参考策略进行重要性采样, 以此多次更新$\theta'$
-      * 局部off-policy化
-    * 重复至收敛
+    * 模型: Policy模型 & Value模型
+    * GD
+      * $Loss_{PolicyNet}=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}\min({A^{GAE}_{\theta'}\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}},{clip(\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)},1-\epsilon, 1+\epsilon)}A^{GAE}_{\theta'})$
+      * $Loss_{ValueNet}=MSE(TD\_target, V(s_t))$
+    * 训练过程
+      * 使用当前$\theta$生成一组轨迹$\mathbb{D}$(全局on-policy)
+      * 计算此时$\theta$下得到的$TD\_target, TD\_delta, A^{GAE}_{\theta'},\pi_{\theta'}(a|s)$作为参考策略$\theta'$的数据
+      * 在$\mathbb{D}$上对进行**多轮训练**, 该过程中使用预先计算好的数据作为参考策略$\theta'$数据进行重要性采样
+        * 每一步实际计算的只有当前策略下的$\pi_{\theta}(a|s)$和$V_\theta(s)$
+        * 局部off-policy化
+      * 重复至收敛
 
 * $\cal{[deepseek]}$ GRPO
 

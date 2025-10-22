@@ -29,21 +29,30 @@ def moving_average(a, window_size):
 
 def train_on_policy_agent(env, agent, num_episodes):
     return_list = []
-    for i in range(10):
+    for i in range(10): #
         with tqdm(total=int(num_episodes/10), desc='Iteration %d' % i) as pbar:
             for i_episode in range(int(num_episodes/10)):
                 episode_return = 0
                 transition_dict = {'states': [], 'actions': [], 'next_states': [], 'rewards': [], 'dones': []}
-                state = env.reset()
+
+                # Gymnasium:env.reset() 返回 (observation, info)
+                state, _ = env.reset()
                 done = False
                 while not done:
                     action = agent.take_action(state)
-                    next_state, reward, done, _ = env.step(action)
+
+                    # Gymnasium:env.step() 返回 (observation,reward,terminated(终止状态),truncated(超时),info)
+                    # Gymnasium 使用 terminated 和 truncated 替代 done
+                    # 此时 done = terminated or truncated
+                    next_state, reward, terminated, truncated, _ = env.step(action)
+                    done = terminated or truncated
+
                     transition_dict['states'].append(state)
                     transition_dict['actions'].append(action)
                     transition_dict['next_states'].append(next_state)
                     transition_dict['rewards'].append(reward)
                     transition_dict['dones'].append(done)
+
                     state = next_state
                     episode_return += reward
                 return_list.append(episode_return)
@@ -82,6 +91,7 @@ def compute_advantage(gamma, lmbda, td_delta):
     td_delta = td_delta.detach().numpy()
     advantage_list = []
     advantage = 0.0
+    # 倒着进行计算各步的A^GAE, 每一步的结果都可用于下一步
     for delta in td_delta[::-1]:
         advantage = gamma * lmbda * advantage + delta
         advantage_list.append(advantage)
