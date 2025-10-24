@@ -2,8 +2,6 @@
 
 >  数学 概念 工具...
 
-什么都不会...
-
 体感上, RL领域的各种定义并没有一个标准化的规范, 大家只是"差不多这个意思"的进行讨论
 
 我尽量保证公式符号表示定义的一致连贯
@@ -13,19 +11,53 @@
 * PPO
 * PPO-on-LLM
 * GRPO(todo)
+* 调研报告
+
+###### From How to Why
+
+2025.10.22
+how很好理解, 但是重要的是知道why
+如TRPO的数学推导
+
+在初期的探索后, 进一步学习, 了解数学原理和Why就需要开始研读论文了
+
+怎么找Idea???GRPO视频讲解那一期很有意思
 
 ##### Math
 
-得补课概率论和高数...
+需要狠狠的补课...
+
+总之, 各种概念遇到了就写下来并证明过一遍
+
+###### 高数
+
+* 泰勒展开 *Taylor's Formula*
+
+$$
+当f(x)...
+$$
+
+* 拉格朗日定理
+
+* 隐函数
+
+  无法通过$y=f(x)$显式的用x表示y, x与y的关系是通过一个形式为$F(x,y)=0$的方程"隐式定义"的
+  $$
+  e.g.~x^2+xy+y^3-7=0\\
+  sin(xy^3)+x^2-1=0\\
+  诸如此类
+  $$
 
 ###### 概率相关
 
 * 全概率公式
 
-  * $\Bbb E_{x\backsim p(x)}(f(x)) \iff {\displaystyle\sum_x}p(x)f(x)~~~ \mathbb{E}与\sum的互换$
-  
+  $\Bbb E_{x\backsim p(x)}(f(x)) \iff {\displaystyle\sum_x}p(x)f(x)~~~ \mathbb{E}与\sum的互换$
+
 * **蒙特卡洛特方法 *Monte Carlo Method* **
+  
   * 对于不知道确切分布的求期望场景, 我们可以通过采样*(Sampling)*逼近期望值
+    * 理论基础: 大数定理
 
 
 $$
@@ -51,22 +83,22 @@ $$
 
 * KL散度 *KL diverge* $D_{KL}(P||Q)$
 
-  * $$
+  $$
   用分布Q近似分布P: D_{KL}(P||Q) = \begin{cases}
-    \displaystyle\sum_xP(x)\log\frac{P(x)}{Q(x)},&离散\\
-    \displaystyle\int P(x)\log\frac{P(x)}{Q(x)}dx,&连续
-    
-    \end{cases}
-    $$
+  \displaystyle\sum_xP(x)\log\frac{P(x)}{Q(x)},&离散\\
+  \displaystyle\int P(x)\log\frac{P(x)}{Q(x)}dx,&连续
   
+  \end{cases}
+  $$
+
   * 描述两个分布的差别
 
   * 恒大于等于0, 当且仅当P,Q同分布时为0
 
     * 证明: Jensen不等式
-  
+
   * 正反向KL的区别
-  
+
 * $\epsilon-探索$
 
 $$
@@ -93,21 +125,26 @@ $$
     * $p(s'|s,a)$状态转移的输入只需要当前的State和Action, 与之前任意步的State和Action无关
     * 也可以理解为, 我们相信Env反馈的State域已经包含了我们所做的行为可能影响到的所有方面
   * 离散状态下被称为 *马尔可夫链*
+* 熵 & 交叉熵: Entropy
 
 ##### RL 定义
 
-$S:状态空间;~A:动作空间;~R:奖励空间$
+$S:状态空间;~A:动作空间;~R:奖励空间;~H:Horizon~视界范围;~\theta:策略参数$
 
 ###### 概念定义
 
 * 概述
-  * RL问题可以描述为: Agent从与Environment的**交互**中不断学习以完成特定目标(如: maximize(Return))
+  * RL问题可以描述为: Agent从与Environment的**交互**中不断学习以完成特定目标
     * 交互: Agent在不同的State依据其Policy-$\pi_\theta$选择动作, 完成状态转移并获得Env的Reward反馈的过程
     * Agent根据已知信息更新Policy学习最优策略
-  * RL的目标: 学习到一个策略$\pi_{\theta}(a|s)$来最大化期望回报(expected return)
-  * 与经典Supervised的区别
-    * 对于输$s$, 没有人类可以提供的标签$a^*$, 需要agent自行探索
-    * supervised要求dataset独立同分布
+  * RL的普遍目标: 学习到一个策略$\pi_{\theta}(a|s)$来最大化期望回报(expected return)
+  * 与经典Supervised Learning的区别
+    * 数据并非准备好的满足各种假设的数据集, 而是完全来自Agent与Env的交互
+      * Hypothesis we have on the data set
+        * 独立同分布
+        * 真实
+        * ...
+    * 对于输入$s$, 没有人类可以提供的标签$a^*$, 需要agent自行探索
     * **(非常重要!)RL的样本既不独立也不同分布**
       * **Sampling带来的后果, 根据目前Policy动态变化的Dataset, 而Dataset又改变了Policy**
       * 后果: $\theta$的Graph是随着Sampling不断变化的
@@ -121,28 +158,25 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
   * 一般来说, RL中训练Agent的目标为最大化预计能获得的Return(非单步reward, 而是预期整个轨迹能获得的总reward)
 * 模型 Model
 
-    * 即Env的运行规律, alias "环境动力学模型"
-      * RL里一般特指$Model = \{r(s,a,s'), p(s'|s,a)\}$
-        * **状态转移概率** *Transition Function*: $p(s_{t+1}|s_t, a_t)$
-          * $S\times A\rightarrow \Delta(S)$
-            * 用$\Delta(S)$表示在S上的概率分布
-            * $(s,a)$往往只能确定$s'$的分布, 而不是总是导向单个$s'$
-            * 例如, 机器人走路遇到障碍(s), 选择跳过去(a), 可能成功($s^{'}_1$)也可能摔倒($s^{'}_2$)
-          * 智能体根据当前状态$s_t$做出一个动作$a_t$之后，下一个时刻环境处于不同状态$s_{t+1}$的概率分布
-          * 一般由环境决定, 一般符合Monte Carlo过程
-        * **奖励函数** *Reward Function*: $r(s_t, a_t, s_{t+1})$
-          * $S × A × S → \mathbb R$
-          * 需要注意, 返回的奖励与到达的新状态也有关
-            * 如前例, 遇到障碍(s)选择跳(a), 可能成功($s^{'}_1$)也可能摔倒($s^{'}_2$), 两种新状态reward不同
-      * Model一般难以得知, 因此大多数时候我们无法直接使用model得到解析解, 而只能通过交互采样
-        * 但也可以用一个网络进行模拟, 隐式得到
-    * Model-Based/Model-Free: 区别在于环境知识的掌握程度
-      * Model-Based: 显式使用Model中的函数
-      * Model-Free: 没有关于Model的先验知识, 通过交互采样$(s,a,s',r)$进行学习
+    即Env的运行规律, alias "环境动力学模型"
+    * RL里一般特指$Model = \{r(s,a,s'), p(s'|s,a)\}$
+      * **状态转移概率** *Transition Function*: $p(s_{t+1}|s_t, a_t)$
+        * $S\times A\rightarrow \Delta(S)$
+          * 用$\Delta(S)$表示在S上的概率分布
+          * $(s,a)$往往只能确定$s'$的分布, 而不是总是导向单个$s'$
+          * 例如, 机器人走路遇到障碍(s), 选择跳过去(a), 可能成功($s^{'}_1$)也可能摔倒($s^{'}_2$)
+        * 智能体根据当前状态$s_t$做出一个动作$a_t$之后，下一个时刻环境处于不同状态$s_{t+1}$的概率分布
+        * 一般由环境决定, 一般符合Monte Carlo过程
+      * **奖励函数** *Reward Function*: $r(s_t, a_t, s_{t+1})$
+        * $S × A × S → \mathbb R$
+        * 需要注意, 返回的奖励与到达的新状态也有关
+          * 如前例, 遇到障碍(s)选择跳(a), 可能成功($s^{'}_1$)也可能摔倒($s^{'}_2$), 两种新状态reward不同
+    * Model一般难以得知, 因此大多数时候我们无法直接使用Model得到解析解, 而只能通过交互采样
+      * 但也可以用一个网络进行模拟, 隐式得到
 * **策略 Policy** $\pi_{\theta}(a|s);a=\mu_\theta(s)$
     * $S\rightarrow\Delta(A)$
     * 决定Agent在状态s下采取什么行动a
-    * 同样的, $\pi_\theta(a|s)$输出一个**a的分布**, 不一定总是某个确定的动作
+    * 同样的, $\pi_\theta(a|s)$输出一个**a的分布**
     * 也有**确定性策略**, 表示为$a= \mu_\theta(s):S{\rightarrow}A$
 * 状态 State
   * Env给Agent反馈的状态
@@ -156,9 +190,14 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
     * Reward是环境给Agent的奖惩反馈, 其定义会很大程度上影响模型的行为进而影响表现
 * 轨迹 Trajectory $\tau$
     * MDP的一个轨迹（trajectory）
+    
     * 例: $\tau = \{s_0, a_0, s_1, r_1(s_0, a_0, s_1), \cdots, s_{T-1}, a_{T-1}, s_T, r_T(s_{T-1}, a_{T-1}, s_T)\}$
+
+    * 有的定义为$\tau = \{\cdots,s_t,a_t,r_t,s_{t+1},\cdots\}$
+    
     * 在参数$\theta$下特定路径$\tau$出现的概率可以用Policy和Transition Function连乘表示
-      * $p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}$
+    
+      $p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}$
 * 回报 Return
     * Agent和Env进行一次交互过程的轨迹$\tau$累积的Reward
     * 轨迹$\tau$的总回报: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
@@ -166,7 +205,8 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
       * $\gamma\in[0,1]$为折扣率 discount rate
       * 当$\gamma\rightarrow 0$时，Agent更在意短期回报；而当$\gamma\rightarrow 1$时，长期回报变得更重要
 * 期望回报 Expected Return
-    * $J(\theta)=\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]=\Bbb E_{\tau\backsim p_{\theta}(\tau)}[\sum^{T-1}_{t=0}{\gamma^tr_{t+1}}]$ 
+
+    $J(\theta)=\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]=\Bbb E_{\tau\backsim p_{\theta}(\tau)}[\sum^{T-1}_{t=0}{\gamma^tr_{t+1}}]$ 
 
 ###### 值函数
 
@@ -175,22 +215,22 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
 
   * 描述从状态s开始，执行策略$\pi_{\theta}$得到的期望总回报
 
-  * $V_{\pi_{\theta}}(s) = \Bbb E_{\tau\backsim p_\theta(\tau)}[G(\tau)|\tau_{s_t} = s]$
+      $V_{\pi_{\theta}}(s) = \Bbb E_{\tau\backsim p_\theta(\tau)}[G(\tau)|\tau_{s_t} = s]$
 
       *  $\pi_\theta(a|s),p(s'|s, a)$返回的是概率分布
       * 因此, 即使输入固定的$s_0, \pi_{\theta}$, 每次交互的轨迹也可能不同, 故求$V_{\pi_{\theta}}(s)$需要用$\mathbb{E}$--期望值
 
   * Bellman: $V_{\pi_{\theta}}(s) = \sum_{a\backsim\pi_{\theta}(a|s)}\pi_\theta(a|s)\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma V_{\pi_{\theta}}(s')]$ 
 
-    * $$
-      \begin{align}
-      V_{\pi_{\theta}}(s) &= \Bbb E_{\tau\backsim p_\theta(\tau)}[G(\tau)|\tau_{s_t} = s]\\
-      	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\mathbb E_{\tau\backsim p_\theta(\tau)}[G(\tau_t)|\tau_{s_t}=s, \tau_{a_t}=a]\\
-      	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\sum_{a'\backsim p(a'|s,a)}p(a'|s,a)\mathbb (r(s,a,s')+\gamma \mathbb E[G(\tau_{t+1}|\tau_{s_{t+1}}=s')])\\
-      	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_\theta(a|s)\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma V_{\pi_{\theta}}(s')]\\
-      	&= \Bbb E_{a\backsim\pi_{\theta}(a|s)}\Bbb E_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\pi_{\theta}}(s')]\\
-      \end{align}
-      $$
+    $$
+    \begin{align}
+    V_{\pi_{\theta}}(s) &= \Bbb E_{\tau\backsim p_\theta(\tau)}[G(\tau)|\tau_{s_t} = s]\\
+    	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\mathbb E_{\tau\backsim p_\theta(\tau)}[G(\tau_t)|\tau_{s_t}=s, \tau_{a_t}=a]\\
+    	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\sum_{a'\backsim p(a'|s,a)}p(a'|s,a)\mathbb (r(s,a,s')+\gamma \mathbb E[G(\tau_{t+1}|\tau_{s_{t+1}}=s')])\\
+    	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_\theta(a|s)\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma V_{\pi_{\theta}}(s')]\\
+    	&= \Bbb E_{a\backsim\pi_{\theta}(a|s)}\Bbb E_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\pi_{\theta}}(s')]\\
+    \end{align}
+    $$
 
     * 理解: 树形分散 对于所有可能路径
 
@@ -202,41 +242,41 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
 
   * 描述初始状态为s并进行动作a后，执行策略$\pi_{\theta}$得到的期望总回报。
 
-  * $Q_{\pi_{\theta}}(s,a)=\Bbb E_{\tau\backsim p(\tau)}[G(\tau)|\tau_{s_0} = s,\tau_{a_0}=a]$
+    $Q_{\pi_{\theta}}(s,a)=\Bbb E_{\tau\backsim p(\tau)}[G(\tau)|\tau_{s_0} = s,\tau_{a_0}=a]$
 
   * Bellman: 
-
-    * 
-      $$
-      \begin{align}
-      Q_{\pi_{\theta}}(s,a)
-      &=\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]\\
-      
-      &=\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma\sum_{a'\backsim \pi_{\theta}(a'|s')}\pi_\theta(a'|s')Q_{\pi_{\theta}}(s',a')]
-      
-      \end{align}
     $$
-      
-      
-
-* Q&V 关系
+    \begin{align}
+    Q_{\pi_{\theta}}(s,a)
+    &=\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]\\
+    
+    &=\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma\sum_{a'\backsim \pi_{\theta}(a'|s')}\pi_\theta(a'|s')Q_{\pi_{\theta}}(s',a')]
+    
+    \end{align}
+    $$
+    ​    
   
+* Q&V 关系
+
     * $Q(s,a)=\Bbb E_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
     * $V(s)=\mathbb E_{a\backsim \pi_{\theta}(a|s)}[Q(s,a)]=\sum_{a\backsim \pi_{\theta}(a|s)}\pi_{\theta}(a|s)Q(s,a)$
     * 也可代换入Bellman
     * 公式很美
-    
+
 * 优势函数 Advantage Function: $A_\theta(s, a) = Q(s, a) - V(s)$
 
-    * 平衡Bias和Variance
+    * 表示在State:$s$下采取特定Action:$a$相较于预期回报带来的优势
+    
+* 消去$Q(s,a)$的采样表示
+  $$
+  \because Q(s,a) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]\\
+      A_\theta(s, a) = Q(s, a) - V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')-V(s)]\\
+  $$
+  
     * 对$A_\theta$的进一步优化: 广义优势估计 $A^{GAE}_\theta$ *General Average Estimation*
-
-    $$
-    \begin{align}
-    \because Q(s,a)&=\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]\\
-    A_\theta(s, a)
-    	&= Q(s, a) - V(s)\\
-    	&= \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')-V(s)]\\
+  
+  $$
+  \begin{align}
     对A_\theta进行多步采样\\
     \because 在采样中, V(s_{t+1})&\approx r_{t+2}+\gamma V(s_{t+2})\\
     A^1_\theta(s_t,a)&=r_{t+1}+\gamma V_\theta(s_{t+1})-V_\theta(s_t)\\
@@ -254,15 +294,17 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
     	&=(1-\lambda)(\delta^V_t+\lambda(\delta^V_t+\gamma\delta^V_{t+1})+\lambda^2(\delta^V_t+\gamma\delta^V_{t+1}+\gamma^2\delta^V_{t+2}))+\cdots)\\
     	&=(1-\lambda)(\delta^V_t(1+\lambda+\lambda^2+\cdots)+\gamma\delta^V_{t+1}(\lambda+\lambda^2+\cdots)+\cdots)\\
     	&=(1-\lambda)(\delta^V_t\frac{1}{1-\lambda}+\gamma\delta^V_{t+1}\frac{\lambda}{1-\lambda}+\cdots)&\lambda^n\rightarrow0\\
-    	&=\sum_{b=0}^\infty(\gamma\lambda)^b\delta^V_{t+b}
+	&=\sum_{b=0}^\infty(\gamma\lambda)^b\delta^V_{t+b}
     \end{align}
-    $$
-
+  $$
+  
     * 表示在状态$s_t$时做动作a带来的优势
       * Multi-Step Temporal Difference
       * 通过调整$\lambda$平衡了采样不同步带来的方差&偏差的平衡问题
 
 ###### On-Policy & Off-Policy
+
+区别在于与环境交互采集数据的Policy和训练的Policy是否为同一个
 
 * 在线学习(同策略学习) On-Policy
   * 采集数据用的Policy和训练的Policy是同一个
@@ -270,11 +312,18 @@ $S:状态空间;~A:动作空间;~R:奖励空间$
     * 训练$\theta'$时原来的$\mathbb{D}$会被丢弃, 需要重新用$\theta'$生成$\mathbb{D'}$
   * 问题
     * 大部分时间都在采集数据, 耗时长
-    * 数据只会使用一次, 效率低
+    * 每次交互采集的数据只会使用一次, 训练效率低
 * 离线学习(异策略学习) Off-Policy
   * 采集数据用参考策略, 目标是训练另一个Policy
     * 使用$\theta_{ref}$生成$\mathbb{D}$, 然后用$\mathbb{D}$更新目标策略$\theta$
   * 一般数据可以多次复用
+
+###### Model-Based & Model-Free
+
+区别在于对环境知识的掌握程度
+
+* Model-Based: 显式使用Model中的函数
+* Model-Free: 没有关于Model的先验知识, 通过交互采样$(s,a,s',r)$进行学习
 
 ##### RL 方法概论
 
@@ -310,8 +359,13 @@ $$
     * Q-Learning, DQN
 * Q-Learning
   * 用于离散$S$+离散$A$
-  * Sampling+Bellman: $Q_{\pi_{\theta}}(s,a)=\underbrace{\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}}_{where~sampling~works}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
+  
+  * Sampling+Bellman: 
+    
+    $Q_{\pi_{\theta}}(s,a)=\underbrace{\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}}_{where~sampling~works}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
+    
     * $\gamma \Bbb{E}_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]$部分在算法中会默认选择最优Action
+    
   * 对于一步采样$(s,a,s',r)$(数据可复用, off-policy)
     * $target:r+\gamma {max}_{a'}Q_k(s',a')$
     * $update:Q_{k+1}(s,a)\leftarrow Q_k(s,a)+\alpha(target-Q_k(s,a))$
@@ -379,7 +433,7 @@ $$
 
 * REINFORCE
 
-  * 算法
+  * Monte-Carlo Policy Gradient
     * 在策略$\pi_\theta$下采样N条轨迹(典型的on-policy)
     * $计算梯度:\nabla_{\theta}J(\theta)=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)$
     * $Gradient~Ascent:\theta'\leftarrow\theta+\alpha\nabla J(\theta)$
@@ -395,23 +449,61 @@ $$
   s.t.D_{KL}(\pi_\theta(a|s)||\pi_{\theta'}(a|s))<\epsilon
   $$
 
-    * 对Sampling带来的不稳定问题的解决思想
+  * 限制步长 避免更新过度导致策略崩溃
 
-        * 限制步长 避免更新过度导致策略崩溃
+  * 数学推导 *From How to Why*
+    $$
+    Define:\\
+    \rho(s_0):初始状态s_0的分布
+    $$
+    
 
-    * surrogate loss推导
-      $$
-      J(\theta')-J(\theta)>0
-      $$
+    * Difference in policy performance $J(\theta')-J(\theta)$can be decomposed as a sum of per-timestep advantages
+      * 用$\theta'$在轨迹上的advantage function和$J(\theta)$来表示$J(\theta')$
 
-      * 优势函数的让人容易接受的推导方式
-
+    $$
+    \begin{align}
+    Proof:J(\theta')
+    	&=J(\theta)+\mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[\sum_{t=0}^\infty\gamma^tA_\theta(s_t,a_t)]\\
+    
+    即证&\Downarrow\\
+    
+    \mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[\sum_{t=0}^\infty\gamma^tA_\theta(s_t,a_t)]
+    	&=J(\theta')-J(\theta)\\
+    
+    \because A_\theta(s, a) = Q(s, a) - V(s) 
+    	&= \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')-V(s)]\\
+    
+    \mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[\sum_{t=0}^\infty\gamma^tA_\theta(s_t,a_t)]
+    	&=\mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[\sum_{t=0}^\infty\gamma^t(r_t+{\gamma}V_\theta(s_{t+1})-V_\theta(s_t))]\\
+    	&=\mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[\sum_{t=0}^\infty\gamma^tr_t+\sum_{t=0}^\infty\gamma^t({\gamma}V_\theta(s_{t+1})-V_\theta(s_t))]\\
+    	
+    	\because\sum_{t=0}^\infty\gamma^t({\gamma}V_\theta(s_{t+1})-V_\theta(s_t))
+    	&=\sum_{t=0}^\infty[{\gamma}^{t+1}V_\theta(s_{t+1})-\gamma^tV_\theta(s_t)]\\
+    	&=-V(s_0)+\gamma{V(s_1)}-\gamma{V(s_1)}+\gamma^2V(s_2)-\gamma^2V(s_2)+\cdots\\
+    	&=-V_\theta(s_0)\\
+    	
+    	\therefore\mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[\sum_{t=0}^\infty\gamma^tA_\theta(s_t,a_t)]
+    	&=\mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[\sum_{t=0}^\infty\gamma^tr_t-V_\theta(s_0)]\\
+    	&=\mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[\sum_{t=0}^\infty\gamma^tr_t]-\mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[V_\theta(s_0)]\\
+  	&我们默认环境初始状态分布\rho与\theta无关\\
+    	&=\mathbb{E}_{\tau{\backsim}p_{\theta'}(\tau)}[\sum_{t=0}^\infty\gamma^tr_t]-\mathbb{E}_{s_0\backsim\rho(s_0)}[V_\theta(s_0)]\\
+  	&=J(\theta')-J(\theta)\\
+    	&得证
+  \end{align}
+    $$
+    
+    
+    
+  * 上下界探究问题详见论文笔记
+    
+  * 目标: 在保证$||\theta-\theta'||<\delta$的情况下(策略不会产生过大的变化), 保证$J(\theta_{new})-J(\theta_{old})>0$
+    
     * 使用新的loss等效替代PG的loss
       * surrogate loss: $A^{GAE}$
       * constraint: $D_{KL}(\theta|\theta^{'})<\epsilon$
-
     * 问题
-
+    
       * Policy的KL散度不好算, 一般没有解析式只能进行数值计算
       * DNN本身不适合限制问题
 
@@ -421,7 +513,7 @@ $$
 
   * 特点理解: 总体上为on-policy, 通过局部的off-policy化实现数据复用解决训练效率问题
     * $\theta$生成本轮数据$\mathbb{D}$并作为参考Policy进行重要性采样, 使用$\mathbb{D}$对$\theta$进行**多轮训练**
-    * 局部off-policy化, 用最开始的$\theta$作为参考策略
+    * 轮次内, 我们可以将最初的$\theta$视为Ref-Policy从而实现局部off-policy化
 
   * 公式推导 *从Policy Gradient Loss的替代优化到重要性采样*
     $$
@@ -458,12 +550,15 @@ $$
     * 训练过程
       * 使用当前$\theta$生成一组轨迹$\mathbb{D}$(全局on-policy)
       * 计算此时$\theta$下得到的$TD\_target, TD\_delta, A^{GAE}_{\theta'},\pi_{\theta'}(a|s)$作为参考策略$\theta'$的数据
-      * 在$\mathbb{D}$上对进行**多轮训练**, 该过程中使用预先计算好的数据作为参考策略$\theta'$数据进行重要性采样
+      * 在$\mathbb{D}$上对$\theta$进行**多轮训练**, 该过程中使用预先计算好的数据作为参考策略$\theta'$数据进行重要性采样
+        * 相当于将最初的$\theta_{init}$视为参考策略$\theta'$
         * 每一步实际计算的只有当前策略下的$\pi_{\theta}(a|s)$和$V_\theta(s)$
         * 局部off-policy化
+        * 对于ValueNet, 每轮都采用TD-target进行MSE逼近
+          * 每轮计算新的V(s_t), 但是TD-target不变, 始终采用ref中的TD-target
       * 重复至收敛
 
-* $\cal{[deepseek]}$ GRPO
+* $\cal{[deepseek]}$ GRPO *Group Relative Policy Optimization*
 
 ###### RLHF Series (RL on Human Feedbacks)
 
@@ -488,18 +583,23 @@ $$
     * 方差越小: 两次估计间间隔小, 直接更新(?)
     * 偏差越大: 引入的数据少
 
-##### Deep Learning Basic
+##### DL & LLM
 
-###### Loss & Gradient Descent
+###### The Role of RL in LLM
 
-###### Bias & Variance
+Work Flow: $Pre-Train{\rightarrow}SFT:Supervised~Fine-Tuning{\rightarrow}ReinforcementLearning$
 
-###### 正则化 Normalization
+一个LLM模型的上限, 在Pre-Train时就已经确定了
 
-###### entropy: 熵 & 交叉熵
+RL的作用是, 彻底发挥出LLM的潜力
+
+当LLM本身能力不足时($roughly,<7B$), 用RL也没效果...
+
+###### Bias & Variance & Sampling: Dive Deeper
 
 ###### Attention
 
 ###### Transformer
 
 ###### VAE
+
