@@ -356,13 +356,22 @@ $$
 
 ###### 通用架构
 
-* Monte-Carlo
+* 蒙特卡洛特方法(Sampling) *Monte-Carlo*
 
-* 时序差分 Temporal Difference
-  * 基于单步采样, 逐步引入真实信息
-
+* 时序差分 *Temporal Difference*
+  
+* 基于单步采样, 逐步引入真实信息
+  
 * Actor-Critic
+  
   * 可解决$A$无限的问题
+  
+* MM框架 *Minorization Maximization*
+
+  一种普遍使用的优化框架
+
+  * 每次迭代找到目标函数的一个下界函数
+  * 不断求这个下界函数的最大值, 以此优化目标函数
 
 ###### Value-Based Roadmap: $Q(s,a)$
 
