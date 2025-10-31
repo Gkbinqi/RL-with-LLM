@@ -1,3 +1,6 @@
+# 来自RL hands on, 感谢其提供的方便的工具
+# 进行了部分修改以适应Gymnasium环境
+
 from tqdm import tqdm
 import numpy as np
 import torch
