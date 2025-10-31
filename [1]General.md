@@ -10,18 +10,19 @@
 
 * PPO
 * PPO-on-LLM
+* DPO
 * GRPO(todo)
-* 调研报告
+* TOD调研报告
 
-###### From How to Why
+###### thoughts
 
-2025.10.22
-how很好理解, 但是重要的是知道why
-如TRPO的数学推导
+历史很重要
 
-在初期的探索后, 进一步学习, 了解数学原理和Why就需要开始研读论文了
+为什么, 面临什么问题, for what & why, not only how
 
-怎么找Idea???GRPO视频讲解那一期很有意思
+现在暂时先读前沿内容, 尽快完成毕设
+
+下学期闲下来, 爬一爬来时路...
 
 ##### Math
 
@@ -614,11 +615,11 @@ $$
   * 数据集+调研报告
   * 试着搓一个demo吧
 
-###### Problems About Sampling -- Dynamic Graph
+###### Problems About Sampling 
 
 > RL的样本既不独立也不同分布
 
-* Graph不稳定
+* Dynamic Graph
   * 由于sampling, $\theta$的Graph是不稳定的
   * Policy更新会影响采样结果, 而采样结果又会用于Policy更新, 此时若某一步出偏, 则可能带来灾难性的后果
   * 即, 整个策略更新的空间会被带入一个低价值空间
@@ -637,7 +638,7 @@ $$
 
 ###### The Role of RL in LLM
 
-Work Flow: $Pre-Train{\rightarrow}SFT:Supervised~Fine-Tuning{\rightarrow}ReinforcementLearning$
+Work Flow: $PreTrain{\rightarrow}SFT:Supervised~Fine~Tuning{\rightarrow}Reinforcement~Learning$
 
 一个LLM模型的上限, 在Pre-Train时就已经确定了
 
