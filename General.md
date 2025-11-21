@@ -1,16 +1,18 @@
-### 通用基础概述
+#### 前言
 
->  数学 概念 工具...
+仅关注基础理解和路径
 
-关注基础内容
+尽量保证公式符号连贯
 
-我尽量保证公式符号的连贯性
+经典算法会实现代码demo
 
-对经典算法会进行代码demo实现 实践是最好的学习
+* DQN
+* Deep-DPG
+* PPO
 
-#### Resources
+###### Resources
 
-Open-AI Spinning Up: https://spinningup.openai.com/en/latest/
+Open-AI Spinning Up(latest: 2018): https://spinningup.openai.com/en/latest/
 
 西湖大学 强化学习的数学原理: https://www.icourse163.org/course/XHUN-1470436188
 
@@ -18,34 +20,13 @@ bilibili rethinkFun: https://space.bilibili.com/18235884
 
 #### Math
 
-手头的事情结束后会系统复习一次数学 现阶段, 问题遇到一个解决一个
-
-###### 全概率公式
-
-$\Bbb E_{x\backsim p(x)}(f(x)) \iff {\displaystyle\sum_x}p(x)f(x)~~~ \mathbb{E}与\sum的互换$
-
-###### **蒙特卡洛特方法 *Monte Carlo Method* **
-
-对于不知道确切分布的求期望场景, 我们可以通过采样*(Sampling)*逼近期望值
-
-* 理论基础: 大数定理
-
-
-$$
-\begin{align}
-\sum_{x}{p(x)f(x)}&=E_{x\backsim p(x)}(f(x)) \approx \frac{1}{N}\sum_{n=0}^{N-1}f(x^{(n)})\\
-e.g. \underbrace{\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]}_{\tau\backsim p_{\theta}(\tau)空间过大~基本无法求期望} &\approx\frac{1}{N}\sum_{n=1}^{N}[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)]
-\end{align}
-$$
-
 ###### 重要性采样
 
 $$
 \begin{align} 
-E_{x\backsim p(x)}(f(x))
+\mathbb{E}_{x\backsim p(x)}(f(x))
 	&=\sum_{x\backsim p(x)}{p(x)f(x)}\\
 	&=\sum_{x\backsim p(x)}{p(x)f(x)\frac{q(x)}{q(x)}}\\
-	&=\sum_{x\backsim p(x)}{q(x)f(x)\frac{p(x)}{q(x)}}\\
 	&=\sum_{x\backsim q(x)}{q(x)[f(x)\frac{p(x)}{q(x)}]}\\
 	&=\mathbb{E_{x\backsim q(x)}}[f(x)\frac{p(x)}{q(x)}]\\
 	&\approx\frac{1}{N}\sum_{n=0}^{N-1}[f(x)\frac{p(x)}{q(x)}]_{x\backsim q(x)}\\
@@ -63,148 +44,129 @@ $$
 $$
 
 * 描述两个分布的差别
-
 * 恒大于等于0, 当且仅当P,Q同分布时为0
 
   * 证明: Jensen不等式
-
 * 正反向KL的区别
-
-
+* 与TV散度关系
 
 ###### 最大似然估计
 
-##### 
-
-###### 笛卡尔集 *Cartesian Product*
-
-离散数学内容, $A\times B$即A, B集合中所有元素 all to all 进行有序配对组成新集合
-
-* $|A\times B| = |A|\times|B|$
-
-###### **马尔可夫决策过程** *Markov Decision process* (MDP)
-
-MDP是研究RL最常用数学模型
-
-* MDP是**步骤独立**的, 状态间的转换仅取决于系统**当前的**状态, 而与系统过去或未来任意状态都独立不相关
-  * $p(s'|s,a)$状态转移的输入只需要当前的State和Action, 与之前任意步的State和Action无关
-  * 也可以理解为, 我们相信Env反馈的State域已经包含了我们所做的行为可能影响到的所有方面
-* 离散状态下被称为 *马尔可夫链*
-
 ###### 熵 & 交叉熵: *Entropy*
 
-#### RL 定义
+#### RL概念基础
+
+##### RL定义
 
 $$
 S:状态空间;~A:动作空间;~R:奖励空间;~H:Horizon~视界范围;\\
 ~\Delta(Space):在某个空间上的概率分布;~\theta:模型参数
 $$
 
-##### 概念定义
-
 ###### RL概述
 
 RL问题可以描述为: Agent从与Environment的**交互**中不断学习以完成特定目标
 
-* 交互: Agent在不同的State依据其Policy-$\pi_\theta$选择动作, 完成状态转移并获得Env的Reward反馈的过程
-* Agent根据已知信息更新Policy学习最优策略
+* 交互: Agent在不同的State依据其Policy $\pi_\theta$ 选择Action, 完成状态转移并获得Env的Reward反馈的过程
+* Agent根据已知信息更新Policy学习最优策略$\pi^*$
 
-RL的普遍目标: 学习到一个 optimal Policy $\pi_{\theta}(a|s)$来最大化期望回报(expected return)
+RL的普遍目标: 学习到一个 optimal Policy $\pi^*_{\theta}(a|s)$来最大化期望回报(expected return)
 
-* RL 与 Supervised Learning 的区别
+###### **马尔可夫决策过程** *Markov Decision Process* (MDP)
 
-    * 数据并非准备好的满足各种假设的数据集, 而是完全来自Agent与Env的交互
-      * Hypothesis we have on the data set
-        * 独立同分布
-        * 真实
-        * ...
-    * 对于输入$s$, 没有人类可以提供的标签$a^*$, 需要agent自行探索
-    * **(非常重要!)RL的样本既不独立也不同分布**
-      * **Sampling带来的后果, 根据目前Policy动态变化的Dataset, 而Dataset又改变了Policy**
-      * 后果: $\theta$的Graph是随着Sampling不断变化的
-      * 某次错误的Sampling和updates可能会给全局带来灾难性的后果
-        * 之后会深入研究
+RL一般将问题建模为MDP
 
+MDP是**历史无关**的, 状态间的转换仅取决于系统**当前的**状态, 而与系统过去或未来任意状态都独立不相关
 
+* $p(s'|s,a)$状态转移的输入只与当前的State和Action有关, 与之前任意步的State和Action无关
+  * $p(s_{t+1},|s_t,a_t)=p(s_{t+1}|s_0,a_0,s_1,a_1,\ldots,s_t,a_t)$
+  * 也可以理解为, 我们相信Env反馈的State域已经包含了我们所做的行为的能影响到的所有信息
+* 给定策略$\pi$, MDP将变成一个Markov Process
 
+###### 空间
 
-###### 环境 Environment (Env)
+* 状态 State $s{\in}S$
 
-* 抽象的与Agent交互的实体. Env 接收 Agent 的 Action 而改变State, 并反馈 Reward
-* 一般来说, Env 是黑箱, 其内部实现我们无法直接得知, 只能通过有限的接口和规则与其交互并观察其 State 转移和 Reward 反馈
+  Agent 能观察到的 Env 的状态
+
+  * Observation: State的子集(或者说, 残缺信息, Ob也可能是State的低维观察信息), 因为Agent未必能获得全部的State, 有时其只能获得Ob到的部分真实State信息, 并且可能有噪声(如: 超agent感知范围, 感知结构) 
+  * 环境中有一个或多个特殊的终止状态(terminal state; absorbing state)
+
+* 动作 Action $a{\in}A$
+
+  Agent能采取的行动
+
+* 奖励 Reward $r{\in}\mathbb{R}$
+
+  Reward是环境给Agent的奖惩反馈, **其定义会决定模型的改进方向**
+  
+  * 关于Reward有很多讨论研究, 很关键的部分
 
 ###### 智能体 Agent
 
-Ob Env 的 State, 依据其 Policy 做出决策与 Env 进行交互的实体
+观察 Env 的 State, 依据其 Policy 做出决策给出 Action 与 Env 进行交互的实体
 
-###### 模型 Model
+* **策略 Policy** $\pi_{\theta}(a|s);\mu_\theta(s)$
 
-即 Env 的运行规律, alias "环境动力学模型"
-* RL里一般特指由环境决定的函数$Model = \{r(s,a,s'), p(s'|s,a)\}$
+  决定Agent在状态s下采取什么行动a
+
+  * $Stochastic: \pi_{\theta}(a|s)$
+    * $S\rightarrow\Delta(A)$
+    * 随机策略$\pi_\theta(a|s)$输出a分布
+  * $Deterministic:a=\mu_\theta(s)$
+    * $S{\rightarrow}A$
+    * 确定性策略, 输出具体动作
+
+Agent可以有内部的belief state, 也可以在内部构建世界模型对Env建模
+
+###### 环境 Environment (Env)
+
+与Agent交互的实体, 接收 Agent 的 Action 而改变State, 并反馈 State & Reward
+
+* **模型 Model**
+
+  即 Env 的运行规律, RL里一般特指由环境决定的函数 $Model = \{r(s,a,s'), p(s'|s,a)\}$
+
   * **状态转移概率** *Transition Function*: $p(s'|s, a)$
+
+    智能体根据当前状态$s_t$做出一个动作$a_t$之后，下一个时刻环境处于不同状态$s_{t+1}$的概率分布
+
     * $S\times A\rightarrow \Delta(S)$
       * $(s,a)$往往只能确定$s'$的分布, 而不是总是导向单个$s'$
       * 例如, 机器人走路遇到障碍(s), 选择跳过去(a), 可能成功($s^{'}_1$)也可能摔倒($s^{'}_2$)
-    * 智能体根据当前状态$s_t$做出一个动作$a_t$之后，下一个时刻环境处于不同状态$s_{t+1}$的概率分布
+
   * **奖励函数** *Reward Function*: $r(s, a, s')$
+    
     * $S × A × S → \mathbb R$
     * 需要注意, 返回的奖励与到达的新状态也有关
-      * 如前例, 遇到障碍(s)选择跳(a), 可能成功($s^{'}_1$)也可能摔倒($s^{'}_2$), 两种新状态reward不同
-* Model一般难以得知, 因此大多数时候我们无法直接使用Model得到解析解, 而只能通过交互采样
-  * 有的方法会学习模拟Model, 隐式得到这些转移函数
+      * 如前例, 遇碍(s)跳(a), 成功($s^{'}_1$)或摔倒($s^{'}_2$), 两种新状态reward不同
 
-###### **策略 Policy** $\pi_{\theta}(a|s);\mu_\theta(s)$
+###### 评估指标
 
-决定Agent在状态s下采取什么行动a
+* 轨迹 Trajectory $\tau$
 
-* $Stochastic: \pi_{\theta}(a|s)$
-  * $S\rightarrow\Delta(A)$
-  * 随机策略$\pi_\theta(a|s)$输出a分布
-* $Deterministic:a=\mu_\theta(s)$
-  * $S{\rightarrow}A$
-  * 确定性策略, 输出具体动作
+  对MDP过程的一次采样记录
 
-###### 状态 State & Observation(ob) $s;o $
+  $\tau = \{s_0, a_0, s_1, r_1(s_0, a_0, s_1), \cdots, s_{T-1}, a_{T-1}, s_T, r_T(s_{T-1}, a_{T-1}, s_T)\}$
 
-Agent 能观察到的 Env 的状态
+  * ⭐在参数$\theta$下, 特定路径$\tau$出现的概率可以用Policy和Transition Function连乘表示
 
-* Observation: State的子集(或者说, 残缺信息, Ob也可能是State的低维观察信息), 因为Agent未必能获得全部的State, 有时其只能获得Ob到的部分真实State信息, 并且可能有噪声(如: 超agent感知范围, 感知结构) 
-* 环境中有一个或多个特殊的终止状态(terminal state)
+    $p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}$
 
-###### 动作 Action $a$
+    这个式子还有更大的作用, 如对$p_\theta(\tau)$求梯度将复杂的概率密度求导$\nabla_\theta\rho(s)$隐式包含了
 
-Agent能采取的行动
+* 折扣回报 Return $G_t$
 
-###### 奖励 Reward $r$
+  Agent 和 Env 进行一次交互的轨迹$\tau$所累积的折扣全程Reward
 
-Reward是环境给Agent的奖惩反馈, **其定义会决定模型的改进方向**
-
-###### 轨迹 Trajectory $\tau$
-
-$\tau = \{s_0, a_0, s_1, r_1(s_0, a_0, s_1), \cdots, s_{T-1}, a_{T-1}, s_T, r_T(s_{T-1}, a_{T-1}, s_T)\}$
-
-* MDP
-
-* 有的定义为$\tau = \{\cdots,s_t,a_t,r_t,s_{t+1},\cdots\}$
-
-* ⭐在参数$\theta$下, 特定路径$\tau$出现的概率可以用Policy和Transition Function连乘表示
-
-  $p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}$
-
-  这个式子还有更大的作用, $p_\theta(\tau)$形式的抽象将复杂的$\nabla_\theta\rho(s)$求导隐式包含了
-
-###### 回报 Return $R;G$
-
-Agent 和 Env 进行一次交互过程的轨迹$\tau$所累积的全部Reward
-
-* 轨迹$\tau$的**折扣总回报**: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
-  * 从$t_0$时刻开始计算: $G(\tau_{t_0})=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}=r_{t_0+1}+\gamma G(\tau_{t_0+1})$
+  * 轨迹$\tau$的**折扣总回报**: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
+  * 从$t_0$时刻开始计算: $G(\tau_{t_0})=G_{t_0}=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}=r_{t_0+1}+\gamma G_{t_0+1}$
   * $\gamma\in[0,1)$为折扣率 *discount rate*
-  * 当$\gamma\rightarrow 0$时，Agent更在意短期回报；而当$\gamma\rightarrow 1$时，长期回报变得更重要
+    * 当$\gamma\rightarrow 0$时，Agent更在意短期回报；而当$\gamma\rightarrow 1$时，长期回报变得更重要
 
-###### 期望回报 Expected Return $J(\theta)$
+* 期望回报 Expected Return $J(\theta)$
 
-$J(\theta)=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[\sum^{T-1}_{t=0}{\gamma^tr_{t+1}}]$ 
+  $J(\theta)=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[\sum^{T-1}_{t=0}{\gamma^tr_{t+1}}]$ 
 
 ##### 值函数
 
@@ -212,59 +174,77 @@ $J(\theta)=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]=\mathbb{E}_{\tau\
 
 描述从状态s开始，执行策略$\pi_{\theta}$的期望总回报
 
-* $S\rightarrow\mathbb{R}$
+$Def:V_{\theta}(s) = \Bbb E_{\tau\backsim p_\theta(\tau)}[G(\tau)|\tau_{s_t} = s]$
 
-    $V_{\theta}(s) = \Bbb E_{\tau\backsim p_\theta(\tau)}[G(\tau)|\tau_{s_t} = s]$
+* Optimal $V^*$
 
-* Bellman: $V_{\theta}(s) = \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]\\$ 
+  在当前模型$M$下状态的最优的值函数
 
-  $$
-  \begin{align}
-  V_{\theta}(s) &= \mathbb{E}_{\tau\backsim p_\theta(\tau)}[G(\tau)|\tau_{s_t} = s]\\
-  	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\mathbb{E}_{\tau\backsim p_\theta(\tau)}[G(\tau_t)|\tau_{s_t}=s, \tau_{a_t}=a]\\
-  	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\sum_{a'\backsim p(a'|s,a)}p(a'|s,a)\mathbb (r(s,a,s')+\gamma \mathbb E[G(\tau_{t+1}|\tau_{s_{t+1}}=s')])\\
-  	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_\theta(a|s)\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma V_{\theta}(s')]\\
-  	&= \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]\\
-  \end{align}
-  $$
+  对于一个MDP
 
-  * 理解: 树形分散 对于所有可能路径
+  * $\forall{s},V^*$存在且唯一(值唯一)
+  * $\pi^*$存在且可能为多个
+  * 一定存在至少一个$\mu^*$
 
-    * $\sum_{a\backsim\pi_{\theta}(a|s)}$: $\pi_{\theta}$在状态s下可能采取的所有a
-    * $\sum_{s'\backsim p(s'|s,a)}$: 在状态s采取行动a后可能转移到的所有新状态$s'$
 
 ###### 动作值函数 *Action-Value Function* $Q_\theta(s, a)$
 
 描述初始状态为s并进行动作a后，执行策略$\pi_{\theta}$得到的期望总回报
 
-* $S\times A\rightarrow\mathbb R$
-
-    $Q_{\theta}(s,a)=\mathbb{E}_{\tau\backsim p(\tau)}[G(\tau)|\tau_{s_0} = s,\tau_{a_0}=a]$
-
-* Bellman: 
-  $$
-  \begin{align}
-  Q_{\pi_{\theta}}(s,a)
-  &=\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]\\
-  
-  &=\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma\sum_{a'\backsim \pi_{\theta}(a'|s')}\pi_\theta(a'|s')Q_{\pi_{\theta}}(s',a')]
-  
-  \end{align}
-  $$
-  ​    
+$Q_{\theta}(s,a)=\mathbb{E}_{\tau\backsim p(\tau)}[G(\tau)|\tau_{s_0} = s,\tau_{a_0}=a]$
 
 ###### 优势函数 *Advantage Function* $A_\theta(s, a) = Q(s, a) - V(s)$
 
 表示在$s$下 采取特定$a$相较于整体预期回报的优势
 
-* 消去$Q(s,a)$的采样表示
+$A_\theta(s,a)=Q(s,a)-V(s)$
+
+* $A_\theta(s,a)$的变化
+
+  $\because Q(s,a)=\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]\\{\Rightarrow}A(s, a)=\mathbb{E}_{s'{\backsim}p(s'|s,a)}[r(s,a,s')+{\gamma}V(s')-V(s)]$
+
+
+###### Bellman Evaluation
+
+给定策略$\theta$, 对其合法的值函数能够通过递归的方式表示:
+
+$\forall{s}\in{S},{V}_{\theta}(s) = \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]\\$ 
 
 $$
-\because Q(s,a) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]\\
-    A_\theta(s, a) = Q(s, a) - V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')-V(s)]\\
+\begin{align}
+V_{\theta}(s) &= \mathbb{E}_{\tau\backsim p_\theta(\tau)}[G(\tau)|\tau_{s_t} = s]\\
+	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\mathbb{E}_{\tau\backsim p_\theta(\tau)}[G(\tau_t)|\tau_{s_t}=s, \tau_{a_t}=a]\\
+	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)\mathbb (r(s,a,s')+\gamma \mathbb{E}[G(\tau_{t+1}|\tau_{s_{t+1}}=s')])\\
+	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_\theta(a|s)\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma V_{\theta}(s')]\\
+	&= \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]\\
+\end{align}
 $$
 
-  * 对$A_\theta$的进一步优化: 广义优势估计 $A^{GAE}_\theta$ *General Average Estimation*
+* 描述基于策略$\pi_\theta$的所有状态$s$的值函数之间的依赖关系
+* 对合法的值函数 Bellman公式对所有State都成立
+  * 若存在任一状态使等式不成立 则此时的值函数仍需优化
+* 理解: 树形分散 对于所有可能路径
+  * $\sum_{a\backsim\pi_{\theta}(a|s)}$: $\pi_{\theta}$在状态s下可能采取的所有a
+  * $\sum_{s'\backsim p(s'|s,a)}$: 在状态s采取行动a后可能转移到的所有新状态$s'$
+
+$\forall{(s,a)}\in{S{\times}A},Q_{\theta}(s,a)=\mathbb{E}_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
+$$
+\begin{align}
+Q_{\theta}(s,a)
+	&=\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)[r(s,a,s')+\gamma\sum_{a'\backsim \pi_{\theta}(a'|s')}\pi_\theta(a'|s')Q_{\pi_{\theta}}(s',a')]\\
+	&=\mathbb{E}_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]\\
+
+\end{align}
+$$
+
+###### Bellman Optimization
+
+###### 广义优势估计 $A^{GAE}_\theta$ *General Average Estimation*
+
+对$A_\theta$的进一步优化, $A^{GAE}_\theta$表示在状态$s_t$时做动作a在整体上带来的优势
+
+* Multi-Step Temporal Difference
+* 通过调整$\lambda$平衡了采样不同步带来的Bias&Variance的平衡问题
 
 $$
 \begin{align}
@@ -289,21 +269,13 @@ $$
   \end{align}
 $$
 
-  * 表示在状态$s_t$时做动作a在整体上带来的优势
-    * Multi-Step Temporal Difference
-    * 通过调整$\lambda$平衡了采样不同步带来的Bias&Variance的平衡问题
+###### $QVA$ 关系
 
-###### Q&V&A 小结: 推导/opt
-
-$Q(s,a)=\Bbb E_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
+$Q(s,a)=\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
 
 $V(s)=\mathbb{E}_{a\backsim \pi_{\theta}(a|s)}[Q(s,a)]$
 
-$A(s, a) = Q(s, a) - V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')-V(s)]\\$
-
-opt系列:
-
-$Q^*(s,a)=$
+$A(s, a) = Q(s, a) - V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')-V(s)]$
 
 ##### 其他概念
 
@@ -311,7 +283,7 @@ $Q^*(s,a)=$
 
 区别在于对环境知识的掌握程度
 
-* Model-Based: 显式使用Model中的函数
+* Model-Based: 显式使用Model函数
 * Model-Free: 没有关于Model的先验知识, 通过交互采样$(s,a,s',r)$进行学习
 
 ###### On-Policy & Off-Policy
@@ -336,12 +308,32 @@ $Q^*(s,a)=$
 
 ##### 通用架构 & 思想
 
-###### 蒙特卡洛特方法 *Monte-Carlo*
+###### DRL Doesn't Work Yet
+
+> blog:
+
+###### Bootstrapping
+
+核心思想 各个状态的值函数间互相依赖 可以通过依赖关系自求解
+
+###### 广义策略迭代*General Policy Iteration* GPI
+
+###### 蒙特卡洛特方法 *Monte-Carlo* MC
+
+$$
+\begin{align}
+	\sum_{x}{p(x)f(x)}
+	&=\mathbb{E}_{x\backsim p(x)}(f(x)) \approx \frac{1}{N}\sum_{n=0}^{N-1}f(x^{(n)})\\
+
+	e.g. \underbrace{\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]}_{\tau\backsim p_{\theta}(\tau)空间过大~不适合直接求期望} 
+	&\approx\frac{1}{N}\sum_{n=0}^{N-1}[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)]
+\end{align}
+$$
 
 * 全部使用采样得到真实奖励 偏差小
 * 实际中不同采样间差别极大 方差大
 
-###### 时序差分法 *Temporal Difference*
+###### 时序差分法 *Temporal Difference* TD
 
 基于单步采样, 逐步引入真实信息
 
@@ -355,13 +347,27 @@ $Q^*(s,a)=$
 * 每次迭代找到目标函数的一个下界函数
 * 不断求这个下界函数的最大值, 以此优化目标函数
 
-###### Exploration & Exploitation
+###### Exploration & Exploitation *Trade-off*
 
 a trade off
 
 ###### Dive Deeper: Problems About Bias&Variance&Sampling in RL
 
 > RL的样本 既不独立 也不同分布
+
+* RL 与 Supervised Learning 的区别
+
+  * 数据并非准备好的满足各种假设的数据集, 而是完全来自Agent与Env的交互
+    * Hypothesis we have on the data set
+      * 独立同分布
+      * 真实
+      * ...
+  * 对于输入$s$, 没有人类可以提供的标签$a^*$, 需要agent自行探索
+  * **(非常重要!)RL的样本既不独立也不同分布**
+    * **Sampling带来的后果, 根据目前Policy动态变化的Dataset, 而Dataset又改变了Policy**
+    * 后果: $\theta$的Graph是随着Sampling不断变化的
+    * 某次错误的Sampling和updates可能会给全局带来灾难性的后果
+      * 之后会深入研究
 
 * Dynamic Graph
   * 由于sampling, $\theta$的Graph是不稳定的
@@ -407,6 +413,8 @@ $$
 
 ###### DQN
 
+> paper:
+
 使用深度网络模拟Q函数, 解决$S$空间过大/连续问题
 
 * 用于连续$S$+离散$A$
@@ -419,7 +427,7 @@ $$
 
 训练: 对于一步采样$(s,a,s',r)$
 
-* $TD target: r+\gamma {max}_{a'}Q_{\theta_{target}}(s',a')$
+* $TD: r+\gamma {max}_{a'}Q_{\theta_{target}}(s',a')$
 * $loss:\frac{1}{2}[Q_{\theta_{main}}(s,a)-TD]^2$
 * $GD: \theta_{main}^{'}\leftarrow \theta_{main}-\alpha\nabla_\theta[loss]|_{\theta=\theta_k}$
 
@@ -444,11 +452,9 @@ Policy~Gradient~Series:S\rightarrow{\Delta (A)} \\
 需要注意的是,相比Q-Learning,Policy~Gradient有更小的定义域,更平滑的计算空间
 $$
 
-###### [Seed] 策略梯度 Policy Gradient
+###### [$\cal{Base}$] 策略梯度 Policy Gradient
 
 用一个深度网络 $\theta$ 来模拟策略函数$\pi_\theta(a|s)$, 直接学习最优策略
-
-* Optimal Policy目标: Gradient Ascent参数$\theta$获得最大的Expected Return $J(\theta)$
 
 $$
 \begin{align}
@@ -471,7 +477,10 @@ $$
 \end{align}
 $$
 
+* Optimal Policy目标: Gradient Ascent参数$\theta$获得最大的Expected Return $J(\theta)$
+  
 * 对$G_t^n$可采取多种优化, 衍生出不同算法中的Loss
+  
   * $G_t^n-Base(s_t^n)$
   * $A^{GAE}_\theta(s,a)$
   
@@ -503,7 +512,13 @@ Monte-Carlo Policy Gradient
 
 Fisher 信息矩阵
 
+###### $\cal{[PG+ValueFunc]}$ DDPG *Deep Deterministic Policy Gradient*
+
+> paper:
+
 ###### $\cal{[PO数理基础]}$ TRPO *Trust Region Policy Optimization*
+
+> paper:
 
 $$
 argmax_{\theta'}\mathbb{E_{s\backsim v_\theta,a\backsim\pi_\theta(a|s)}}[\frac{\pi_{\theta'}(a|s)}{\pi_{\theta}(a|s)}A_{\pi_\theta}(s,a)]\\ 
@@ -530,6 +545,8 @@ Why
   * DNN本身不适合限制问题
 
 ###### $\cal{[PO技术基础]}$ **PPO** *Proximal Policy Optimization*
+
+> paper:
 
 基于TRPO思想的工程上的可行高效实现
 
@@ -588,17 +605,27 @@ $$
         * 可以理解为$\theta$ overfitting了
         * 也可以理解为$\theta$由于对参数进行了过大的改动 使得其"遗忘"了很多方面的能力
 
+###### [RLHF] DPO *Direct Preference Optimization*
 
+> paper:
 
-###### $\cal{[deepseek]}$ GRPO *Group Relative Policy Optimization*
+###### $\cal{[Deepseek]}$ GRPO *Group Relative Policy Optimization*
+
+> paper:
 
 * 优化掉$V(s)$, 对每组采样计算均值作为baseline
 
-###### [RLHF] DPO *Direct Preference Optimization*
+###### GSPO
 
-###### $\cal{[TricksArt]}$ DAPO
+> paper:
+
+###### $\cal{[Art~Of~Tricks]}$ DAPO
+
+> paper:
 
 ##### Model-Based Roadmap
 
 ###### World Model
+
+> paper:
 
