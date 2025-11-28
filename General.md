@@ -508,9 +508,11 @@ Monte-Carlo Policy Gradient
 
 ###### 自然梯度 *Natural Policy Gradient*
 
-自然梯度
+$\theta$的欧几里得距离$||\theta-\theta'||^2_2$不能很好的反映作为概率分布的$\pi_\theta$的实际变动
 
-Fisher 信息矩阵
+采用KL divergance作为指标, 使用二阶指标以测度策略的真实变动
+
+Fisher 信息矩阵 FIM
 
 ###### $\cal{[PG+ValueFunc]}$ DDPG *Deep Deterministic Policy Gradient*
 
@@ -619,7 +621,7 @@ $$
 
 > paper:
 
-###### $\cal{[Art~Of~Tricks]}$ DAPO
+###### $\cal{[Many~Tricks]}$ DAPO
 
 > paper:
 
