@@ -1,58 +1,20 @@
 #### 前言
 
-仅关注基础理解和路径
+仅关注基础理解, 路径, 经典方法的代码
 
 尽量保证公式符号连贯
 
-经典算法会实现代码demo
-
-* DQN
-* Deep-DPG
-* PPO
-
 ###### Resources
 
-Open-AI Spinning Up(latest: 2018): https://spinningup.openai.com/en/latest/
+数理基础 -- 西湖大学 RL的数学原理: https://www.icourse163.org/course/XHUN-1470436188
 
-西湖大学 强化学习的数学原理: https://www.icourse163.org/course/XHUN-1470436188
+基础概念+代码 -- Open-AI Spinning Up(latest: 2018): https://spinningup.openai.com/en/latest/
 
-bilibili rethinkFun: https://space.bilibili.com/18235884
+部分算法讲解 -- bilibili rethinkFun: https://space.bilibili.com/18235884
 
-#### Math
+进阶 & Roadmap -- RL: Intro 2025 by KM
 
-###### 重要性采样
-
-$$
-\begin{align} 
-\mathbb{E}_{x\backsim p(x)}(f(x))
-	&=\sum_{x\backsim p(x)}{p(x)f(x)}\\
-	&=\sum_{x\backsim p(x)}{p(x)f(x)\frac{q(x)}{q(x)}}\\
-	&=\sum_{x\backsim q(x)}{q(x)[f(x)\frac{p(x)}{q(x)}]}\\
-	&=\mathbb{E_{x\backsim q(x)}}[f(x)\frac{p(x)}{q(x)}]\\
-	&\approx\frac{1}{N}\sum_{n=0}^{N-1}[f(x)\frac{p(x)}{q(x)}]_{x\backsim q(x)}\\
-\end{align}
-$$
-
-###### KL散度 *KL diverge* $D_{KL}(P||Q)$
-
-$$
-用分布Q近似分布P: D_{KL}(P||Q) = \begin{cases}
-\displaystyle\sum_xP(x)\log\frac{P(x)}{Q(x)},&离散\\
-\displaystyle\int P(x)\log\frac{P(x)}{Q(x)}dx,&连续
-
-\end{cases}
-$$
-
-* 描述两个分布的差别
-* 恒大于等于0, 当且仅当P,Q同分布时为0
-
-  * 证明: Jensen不等式
-* 正反向KL的区别
-* 与TV散度关系
-
-###### 最大似然估计
-
-###### 熵 & 交叉熵: *Entropy*
+Dive Deeper --  UCB CS285 (see next repo)
 
 #### RL概念基础
 
@@ -67,20 +29,20 @@ $$
 
 RL问题可以描述为: Agent从与Environment的**交互**中不断学习以完成特定目标
 
-* 交互: Agent在不同的State依据其Policy $\pi_\theta$ 选择Action, 完成状态转移并获得Env的Reward反馈的过程
-* Agent根据已知信息更新Policy学习最优策略$\pi^*$
+* 交互: Agent依据其Policy $\pi_\theta$ 在观察到的State选择Action, 完成状态转移到达新的状态并获得Env的Reward反馈的过程
+* Agent根据**反馈信息**学习最优策略$\pi^*$
 
-RL的普遍目标: 学习到一个 optimal Policy $\pi^*_{\theta}(a|s)$来最大化期望回报(expected return)
+RL的普遍目标: 学习到一个 optimal Policy $\pi^*_{\theta}(a|s)$来最大化期望回报$J(\theta)$(expected return)
 
 ###### **马尔可夫决策过程** *Markov Decision Process* (MDP)
 
 RL一般将问题建模为MDP
 
-MDP是**历史无关**的, 状态间的转换仅取决于系统**当前的**状态, 而与系统过去或未来任意状态都独立不相关
+MDP是**历史无关**(Memoryless)的, 状态间的转移仅取决于系统**当前的**状态, 而与系统过去或未来任意状态都独立不相关
 
-* $p(s'|s,a)$状态转移的输入只与当前的State和Action有关, 与之前任意步的State和Action无关
+* $p(s'|s,a)$状态转移的输出只与输入的当前的State和Action有关, 与之前任意步的State和Action无关
   * $p(s_{t+1},|s_t,a_t)=p(s_{t+1}|s_0,a_0,s_1,a_1,\ldots,s_t,a_t)$
-  * 也可以理解为, 我们相信Env反馈的State域已经包含了我们所做的行为的能影响到的所有信息
+  * 也可以理解为, 我们相信Env反馈的State已经包含了我们所做的行为的能影响到的所有信息
 * 给定策略$\pi$, MDP将变成一个Markov Process
 
 ###### 空间
@@ -90,6 +52,7 @@ MDP是**历史无关**的, 状态间的转换仅取决于系统**当前的**状�
   Agent 能观察到的 Env 的状态
 
   * Observation: State的子集(或者说, 残缺信息, Ob也可能是State的低维观察信息), 因为Agent未必能获得全部的State, 有时其只能获得Ob到的部分真实State信息, 并且可能有噪声(如: 超agent感知范围, 感知结构) 
+    * 方便起见, 简单问题中我们假设Agent能直接获得Env的真实状态State, 即$o=s$
   * 环境中有一个或多个特殊的终止状态(terminal state; absorbing state)
 
 * 动作 Action $a{\in}A$
@@ -104,7 +67,7 @@ MDP是**历史无关**的, 状态间的转换仅取决于系统**当前的**状�
 
 ###### 智能体 Agent
 
-观察 Env 的 State, 依据其 Policy 做出决策给出 Action 与 Env 进行交互的实体
+观察 Env 的 State, 依据其 Policy 做出决策 Action 与 Env 进行交互的实体
 
 * **策略 Policy** $\pi_{\theta}(a|s);\mu_\theta(s)$
 
@@ -117,11 +80,11 @@ MDP是**历史无关**的, 状态间的转换仅取决于系统**当前的**状�
     * $S{\rightarrow}A$
     * 确定性策略, 输出具体动作
 
-Agent可以有内部的belief state, 也可以在内部构建世界模型对Env建模
+Agent可以有内部的部件如belief state, 也可以在内部构建世界模型对Env建模, 此处只讨论Policy
 
 ###### 环境 Environment (Env)
 
-与Agent交互的实体, 接收 Agent 的 Action 而改变State, 并反馈 State & Reward
+接收 Agent 的 Action 而改变State, 并反馈 next State & Reward 与Agent交互的实体
 
 * **模型 Model**
 
@@ -153,11 +116,9 @@ Agent可以有内部的belief state, 也可以在内部构建世界模型对Env�
 
     $p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}$
 
-    这个式子还有更大的作用, 如对$p_\theta(\tau)$求梯度将复杂的概率密度求导$\nabla_\theta\rho(s)$隐式包含了
-
 * 折扣回报 Return $G_t$
 
-  Agent 和 Env 进行一次交互的轨迹$\tau$所累积的折扣全程Reward
+  进行一次交互的轨迹$\tau$所累积的折扣全程Reward
 
   * 轨迹$\tau$的**折扣总回报**: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
   * 从$t_0$时刻开始计算: $G(\tau_{t_0})=G_{t_0}=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}=r_{t_0+1}+\gamma G_{t_0+1}$
@@ -397,6 +358,8 @@ Q-Learning~Series: S{\times}A\rightarrow{\mathbb{R}}\\
 Temporal~Difference: 时序差分
 $$
 
+###### ValueOpt & PolicyOpt & General Policy Iteration
+
 ###### Q-Learning
 
 * 用于离散$S$+离散$A$
@@ -479,7 +442,7 @@ $$
 
 * Optimal Policy目标: Gradient Ascent参数$\theta$获得最大的Expected Return $J(\theta)$
   
-* 对$G_t^n$可采取多种优化, 衍生出不同算法中的Loss
+* 对$G_t^n$(势能?)可采取多种优化, 衍生出不同算法中的Loss
   
   * $G_t^n-Base(s_t^n)$
   * $A^{GAE}_\theta(s,a)$
@@ -494,6 +457,8 @@ $$
 
 ###### REINFORCE
 
+经典的Policy Grad, 先rollout整条轨迹, 然后进行更新
+
 Monte-Carlo Policy Gradient
 
 * 算法
@@ -501,10 +466,11 @@ Monte-Carlo Policy Gradient
   * $计算梯度:\nabla_{\theta}J(\theta)=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)$
   * $Gradient~Ascent:\theta'\leftarrow\theta+\alpha\nabla J(\theta)$
   * 重复至收敛
-* 实践中, 会定义loss为负数, 以便使用梯度下降工具
+* 实践中定义loss为负数, 以便使用GD工具
   * $loss=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\log \pi_{\theta}(a_t^n|s_t^n)$
   * $GD: \theta'\leftarrow\theta-\alpha\nabla loss$
-* with baseline, ...
+* with baseline
+* many baseline(adv)
 
 ###### 自然梯度 *Natural Policy Gradient*
 
@@ -530,8 +496,27 @@ $$
 Why
 
 * 传统Policy Gradient $\theta'\leftarrow\theta+\alpha\nabla{J}(\theta)$对更新步长$\alpha$十分敏感, 步长稍大就可能**破坏原有的策略性能**
+  
   * Extra Topic: Problems About Sampling -- Dynamic Graph
+  
 * 基于CPI 混合策略的思想, 同时修正了混合策略在实践中不可用的问题
+
+* KL散度 *KL diverge* $D_{KL}(P||Q)$
+  $$
+  用分布Q近似分布P: D_{KL}(P||Q) = \begin{cases}
+  \displaystyle\sum_xP(x)\log\frac{P(x)}{Q(x)},&离散\\
+  \displaystyle\int P(x)\log\frac{P(x)}{Q(x)}dx,&连续
+  
+  \end{cases}
+  $$
+
+  * 描述两个分布的差别
+
+    $D_{KL}(P||Q){\geq}0;D_{KL}(P||Q) = 0~iff~P与Q同分布$
+
+    * 证明: Jensen不等式
+
+  * 正反向KL的区别
 
 核心思想: 通过数学证明保证在使用符合限制的步长时每一步都确定能够优化模型表现, 避免步长过大导致模型偏离正确的梯度方向导致模型崩溃的同时使步长尽可能大以加速收敛
 
@@ -555,6 +540,19 @@ Why
 * 特点理解: 总体上为on-policy, 通过局部的off-policy化实现数据复用解决训练效率问题
   * $\theta$生成本轮数据$\mathbb{D}$并作为参考Policy进行重要性采样, 使用$\mathbb{D}$对$\theta$进行**多轮训练**
   * 轮次内, 我们可以将最初的$\theta$视为Ref-Policy从而实现局部off-policy化
+
+* 重要性采样
+  $$
+  \begin{align} 
+  \mathbb{E}_{x\backsim p(x)}(f(x))
+  	&=\sum_{x\backsim p(x)}{p(x)f(x)}\\
+  	&=\sum_{x\backsim p(x)}{p(x)f(x)\frac{q(x)}{q(x)}}\\
+  	&=\sum_{x\backsim q(x)}{q(x)[f(x)\frac{p(x)}{q(x)}]}\\
+  	&=\mathbb{E_{x\backsim q(x)}}[f(x)\frac{p(x)}{q(x)}]\\
+  	&\approx\frac{1}{N}\sum_{n=0}^{N-1}[f(x)\frac{p(x)}{q(x)}]_{x\backsim q(x)}\\
+  \end{align}
+  $$
+  
 
 * 公式推导 *从Policy Gradient Loss的替代优化到重要性采样*
   $$
