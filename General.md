@@ -14,7 +14,7 @@
 
 进阶 & Roadmap -- RL: Intro 2025 by KM
 
-Dive Deeper --  UCB CS285 (see next repo)
+Dive Deeper --  UCB-CS285 (see next repo)
 
 #### RL概念基础
 
@@ -553,7 +553,6 @@ Why
   \end{align}
   $$
   
-
 * 公式推导 *从Policy Gradient Loss的替代优化到重要性采样*
   $$
   \begin{align}
