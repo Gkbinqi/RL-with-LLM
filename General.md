@@ -12,7 +12,7 @@
 
 部分算法讲解 -- bilibili rethinkFun: https://space.bilibili.com/18235884
 
-进阶 & Roadmap -- RL: Intro 2025 by KM
+基础进阶 & Paper Roadmap -- RL: Intro 2025 by KM
 
 Dive Deeper --  UCB-CS285 (see next repo)
 
