@@ -10,7 +10,7 @@
 
 代码基础 -- 动手学强化学习: https://hrl.boyuai.com/chapter/intro/
 
-challenge -- 简单实践: Agent 拆塔 小单层
+challenge -- 简单实践: 训练 Agent 拆单层魔塔 环境搭建+训练Agent
 
 进阶 & Papers -- RL-Intro & UCB-CS285
 
@@ -195,7 +195,7 @@ Bellman 公式 提供了求解值函数的工具
 
 ###### 贝尔曼公式 Bellman Equation
 
-给定策略 $\theta$ 和模型, $\theta$ 合法的值函数能够通过递归的方式表示
+给定策略 $\theta$ 和 $\mathbb{M}$, $\theta$ 合法的值函数能够通过递归的方式表示
 
 $状态值函数: \forall{s}\in{S},{V}_{\theta}(s) = \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]$ 
 
@@ -231,7 +231,7 @@ $$
 
 ###### 策略评估 Policy Evaluation
 
-即通过 Bellman 公式 求解一个策略的值函数
+即, 通过 Bellman Equation 求解一个策略的值函数
 
 由于值函数是评价策略效果的指标, 求解一个策略的值函数的过程也被称为 Policy Evaluation
 
@@ -264,24 +264,42 @@ $$
   $iter: v_{k+1}=r+{\gamma}Pv_k,k{\rightarrow}{\infty}$
 
   可以证明, 迭代无数次后 $v_k$ 与真实值函数 $v_\pi$ 的误差趋零, 精确度足以用于优化策略
+  
+* 实践中是通过 element-wise 方法进行迭代求解
 
-###### 贝尔曼最优公式 BOE *Bellman Optimization Equation*
+  ${\forall}s,V_{k+1}(s)=\sum_{a\backsim\pi_{\theta}(a|s)}{\pi_\theta(a|s)}\sum_{s'\backsim p(s'|s,a)}{p(s'|s,a)}[{r(s,a,s')}+{\gamma}V_k(s')]\\$
 
-基于求解策略的值函数作为评估依据, 我们可以优化策略以逼近目标 -- $\pi^*_\theta$
+###### 贝尔曼最优公式 BOE *Bellman Optimality Equation*
 
-$V(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}V(s')]$
+基于策略的值函数, 我们可以此作为评估依据优化策略以逼近目标 -- $\pi^*_\theta$
 
-Optimal $V^*$
+首先定义目标 Optimal Policy, Optimal State Value 为何
 
-在当前模型$M$下状态的最优的值函数
+* 最优策略 $\pi^*$ 满足: ${\forall}s,V_{\pi^*}(s){\geq}V_\pi(s)\text{ for any other Policy $\pi$}$
 
-对于一个MDP
+  $V^*(s)=V_{\pi^*}(s)$ 最优值函数即为最优策略的值函数
 
-* $\forall{s},V^*$存在且唯一(值唯一)
-* $\pi^*$存在且可能为多个
-* 一定存在至少一个$\mu^*$
+贝尔曼最优公式定义:
 
-###### Note: 基于 Bellman 的 $QVA$ 互推
+* $\text{Bellman Optimality Equation}: V(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}V(s')]$
+
+  $\text{Matrix Vector Form}:v=max_{\pi}(r+{\gamma}Pv)$
+
+本质上, BOE 是一种特殊的 Bellman 公式
+
+* based on $\mathbb{M}$, 用于求解 $v^*$ 以及对应的 $\pi^*$
+
+* 当且仅当 $\pi=\pi^*$, 等式成立
+
+  此时的值函数 $v$ 即为最优值函数 $v^*=v_{\pi^*}$
+
+对于模型$\mathbb{M}$, $v^*$ 和 $\pi^*$ 有:
+
+* $\forall{s},v^*$存在且唯一
+* $\pi^*$ 存在, 可能为多个
+* 存在至少一个$\mu^*$
+
+###### Note: 基于 Bellman Equation 的 $QVA$ 互推
 
 $Q(s,a)=\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
 
@@ -339,18 +357,24 @@ $$
 
 ##### [1] Naive Model-Based
 
-###### Value Evaluation
+基于 Bellman Optimality Equation 的 基于模型的 最优策略求解方法
+
+* 注意, Bellman Optimality Equation 为输入模型, 求解 最优策略 & 最优值函数 的式子
+
+###### Value Iteration
 
 ###### Policy Iteration
 
 ###### Truncated Policy Iteration
 
-核心两个操作
+本质上是操作
 
-* Value Iteration
-  * 基于已有的策略迭代求解其值函数(不一定要求出最后的合法值函数, 差不多即可, 保证每次迭代都会优化)
-* Policy Iteration
-  * 基于已有的值函数(不一定合法)对策略进行迭代优化(BOE max操作)
+* N-times Policy Evaluation
+
+  基于 Bellman Equation 求解当前策略值函数(不一定求出真实值函数, 差不多即可, 保证每次迭代都会优化)
+* Policy Optimization
+
+  基于已有的值函数(不一定合法)对策略进行迭代优化(基于 BOE 的 argmax 操作)
 
 ##### [2] Value-Based Roadmap $Q(s,a)$
 
