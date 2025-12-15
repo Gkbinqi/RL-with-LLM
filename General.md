@@ -12,36 +12,36 @@
 
 challenge -- 简单实践: Agent 拆塔 小单层
 
-进阶 & Paper Roadmap -- RL-Intro & UCB-CS285
+进阶 & Papers -- RL-Intro & UCB-CS285
 
 #### RL 基础概念 & 工具
 
-##### RL 基础定义
+##### RL 定义
 
 $$
-S:状态空间;~A:动作空间;~R:奖励空间;~\Delta(Space):在某个空间上的概率分布;\\
+S:状态空间;~A:动作空间;~R:奖励空间;~\Delta(Space):在Space上的概率分布;\\
 \theta:模型参数;~\mathbb{D}:数据;~\mathbb{M}:世界模型
 $$
 
 
 
-RL问题可以描述为: Agent从与Environment的 **交互**历史信息 中不断学习以完成特定目标
+RL问题可以描述为: Agent 从与 Environment 的**交互**历史信息中 不断学习以完成特定目标
 
-RL的普遍目标: 学习 **Optimal Policy** $\pi^*_{\theta}$, 实现最大化期望回报 $J(\theta)$ 
+RL的普遍目标: 学习 **Optimal Policy** $\pi^*_{\theta}$ --  实现最大化期望回报 $J(\theta)$ 
 
-* 交互: Agent 依据其策略 $\pi_\theta$ 在观察的State选择Action, 完成状态转移, 到达新状态并获得Reward反馈的过程
+* 交互: Agent 依据其策略 $\pi_\theta$ 在观察的State选择Action, **状态转移**到新状态并获得Reward的过程
 
-  Agent 根据**反馈信息**学习最优策略$\pi^*_\theta$
+  Agent 根据**反馈信息**($s', r$) 学习最优策略 $\pi^*_\theta$
 
 ###### **马尔可夫决策过程** *Markov Decision Process* MDP
 
-RL一般将问题建模为MDP: Space + Policy + Markov
+RL 一般将问题建模为MDP: Space + Policy + Markov
 
-Markov特性: **历史无关** (i.e. Memoryless)
+Markov特性: **历史无关** (Memoryless)
 
-* 状态转移仅取决于系统**当前**状态, 与系统过去或未来任意状态都不相关
+* 状态转移仅取决于系统**当前**状态和动作, 与系统过去或未来任意状态动作都不相关
 
-* $p(s'|s,a)$状态转移的输出只与输入的当前的s和a有关, 与之前任意步的s和a无关
+* $p(s'|s,a)$ 状态转移的输出只与输入的当前的s和a有关, 与之前任意步的s和a无关
   * $p(s_{t+1},|s_t,a_t)=p(s_{t+1}|s_0,a_0,s_1,a_1,\ldots,s_t,a_t)$
   
     也可以理解为, 我们相信Env反馈的State已经包含了我们所做的行为的能影响到的所有信息
@@ -50,7 +50,7 @@ Markov特性: **历史无关** (i.e. Memoryless)
 
 * 状态 State $s{\in}S$
 
-  Agent 观察到的其在 Env 中的状态
+  Agent 观察到的自身在 Env 中的状态
 
   * Observation: State的子集(或者说, 残缺信息, Ob也可能是State的低维信息)
     * Agent未必能获得全部的State, 有时其只能获得Ob到的部分State信息, 并且可能有噪声
@@ -85,15 +85,15 @@ Markov特性: **历史无关** (i.e. Memoryless)
 
 ###### 环境 Environment Env
 
-接收 Agent 的 Action 而改变 State, 并反馈 S' & Reward 的与 Agent 交互的实体
+接收 Agent 的 Action 而改变 State, 并反馈 $(s',r)$ 的与 Agent 交互的实体
 
-* **模型 Model**
+* **模型 Model** $\mathbb{M}$
 
   即 Env 的运行规律, RL里一般特指由环境决定的函数 $Model = \{r(s,a,s'), p(s'|s,a)\}$
 
   * **状态转移概率** *Transition Function*: $p(s'|s, a)$
 
-    智能体根据当前状态$s_t$选择动作$a_t$后，下一个时刻环境状态$s'$的概率分布
+    智能体根据当前状态$s$选择动作$a$后，下一个时刻状态 $s'$ 的概率分布
 
     $S\times A\rightarrow \Delta(S)$
     * $(s,a)$往往只能确定$s'$的分布, 而不是总是导向单个$s'$
@@ -197,7 +197,7 @@ Bellman 公式 提供了求解值函数的工具
 
 给定策略 $\theta$ 和模型, $\theta$ 合法的值函数能够通过递归的方式表示
 
-$\forall{s}\in{S},{V}_{\theta}(s) = \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]$ 
+$状态值函数: \forall{s}\in{S},{V}_{\theta}(s) = \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]$ 
 
 $$
 \begin{align}
@@ -218,9 +218,9 @@ $$
   
   * 对于真实的值函数, 贝尔曼公式 ${\forall}s{\in}S$ 成立
     
-    若存在任一状态时等式不成立, 则该值函数非法, 仍需优化
+    若存在任一状态时等式不成立, 此时该值函数非真实值函数, 只能部分建模策略的期望回报, 仍需优化
 
-$\forall{(s,a)}\in{S{\times}A},Q_{\theta}(s,a)=\mathbb{E}_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
+$动作值函数: \forall{(s,a)}\in{S{\times}A},Q_{\theta}(s,a)=\mathbb{E}_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
 $$
 \begin{align}
 Q_{\theta}(s,a)
@@ -251,7 +251,7 @@ $$
 
   直接通过线代变换求解, 得到的v为真实值函数 $v_\pi$
 
-  不过需要做 $O(n^3)$ 的矩阵求逆操作, 并且优化 Policy 并不需要求解精确的值函数
+  不过需要做 $O(n^3)$ 的矩阵求逆操作, 以及优化 Policy 并不需要求解特别精确的值函数
 
   特别的, $(I-{\gamma}P)^{-1}$ 矩阵是 折扣状态访问频率矩阵
 
@@ -263,11 +263,11 @@ $$
 
   $iter: v_{k+1}=r+{\gamma}Pv_k,k{\rightarrow}{\infty}$
 
-  可以证明, 迭代无数次后 $v_k$ 与真实值函数 $v_\pi$ 的误差趋零
+  可以证明, 迭代无数次后 $v_k$ 与真实值函数 $v_\pi$ 的误差趋零, 精确度足以用于优化策略
 
 ###### 贝尔曼最优公式 BOE *Bellman Optimization Equation*
 
-基于求解策略的值函数作为评估依据, 我们可以找到我们的目标 -- 最优策略 Optimal Policy
+基于求解策略的值函数作为评估依据, 我们可以优化策略以逼近目标 -- $\pi^*_\theta$
 
 $V(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}V(s')]$
 
@@ -347,7 +347,7 @@ $$
 
 核心两个操作
 
-* Value Evaluation
+* Value Iteration
   * 基于已有的策略迭代求解其值函数(不一定要求出最后的合法值函数, 差不多即可, 保证每次迭代都会优化)
 * Policy Iteration
   * 基于已有的值函数(不一定合法)对策略进行迭代优化(BOE max操作)
