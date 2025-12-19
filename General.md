@@ -126,15 +126,18 @@ Markov特性: **历史无关** (Memoryless)
 
     对于在 Episode 上工作的任务, 即任务会在合理步数内结束, 我们将其称为 Episodic Task 
 
-* 折扣回报 Return $G_t$
+* 回报 Return $G_t$
 
-  一条 $\tau$ 中全过程折扣后 Reward 的总和
+  一条 $\tau$ 中全过程 Reward 的总和
 
   Return 可用于评估策略的效果
 
-  * $\tau$ 的**折扣总回报**: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
+  * **折扣总回报** Discounted Return: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
 
+    一条 $\tau$ 中全过程 Reward 的折扣后总和, 实际中使用的 Return
+    
     从任意时刻 $t_0$ 开始计算: $G(\tau_{t_0})=G_{t_0}=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}=r_{t_0+1}+\gamma G_{t_0+1}$
+    
   * $\gamma\in[0,1)$为折扣率 *discount rate*
     
     * $\gamma$ 使得我们能够建模无限长轨迹的回报, 并能控制 Agent 的视野范围
@@ -283,21 +286,37 @@ $$
 
 * $\text{Bellman Optimality Equation}: V(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}V(s')]$
 
-  $\text{Matrix Vector Form}:v=max_{\pi}(r+{\gamma}Pv)$
+  $V(s) = max_{\pi}\sum_{a{\backsim}{\pi}(a|s)}{\pi}(a|s)Q(s,a)$
+  
+  $\text{Matrix Vector Form}:v=max_{\pi}(r+{\gamma}Pv)=f(v)$
+  
+* 对于 $=$ 的两种理解
+
+  当左右两边值相等时, 此时 $=$ 代表等式成立, 这里的 $v$ 即为 $v^*$, 对应 $\pi^*$
+
+  当左右两边的值不相等时, 此时 $v{\neq}v^*$, 等号可以视为一次迭代的赋值符号 $v_{k+1}{\leftarrow}f(v_k)$
 
 本质上, BOE 是一种特殊的 Bellman 公式
 
 * based on $\mathbb{M}$, 用于求解 $v^*$ 以及对应的 $\pi^*$
 
-* 当且仅当 $\pi=\pi^*$, 等式成立
+* 给定 $\pi=\pi^*$ 时, BOE 即为基于 $\pi^*$ 的 Bellman Equation
 
   此时的值函数 $v$ 即为最优值函数 $v^*=v_{\pi^*}$
 
-对于模型$\mathbb{M}$, $v^*$ 和 $\pi^*$ 有:
+可以证明(基于 Fixed Point Theorem & 证 $f(v)$  的Contraction property, 细节见书本)
 
-* $\forall{s},v^*$存在且唯一
+对于模型 $\mathbb{M}$, $v^*$ 和 $\pi^*$ 有:
+
+* $v^*$存在且唯一
 * $\pi^*$ 存在, 可能为多个
 * 存在至少一个$\mu^*$
+
+同样基于 Fixed Point Theorem, 可以证明 BOE 可以通过迭代的方式求解
+
+任意初始 $v_0$, 迭代收敛到 $v^*$ 使得 $v^*=f(v^*)$ 等式成立
+
+$\text{init $v_0$},iter:v_{k+1}=f(v_k),k=0,1,2,\ldots$
 
 ###### Note: 基于 Bellman Equation 的 $QVA$ 互推
 
