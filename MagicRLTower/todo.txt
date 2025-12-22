@@ -1,0 +1,12 @@
+2025.12.22
+config: none
+engine: 
+	1. obs: 做成POMDP
+	2. obs: 为适配CNN: 返回(C*W*H)
+main: 
+	更多环境的键位读取适配
+map_gen:
+	全面大改 不满意
+mechanics: none
+render:
+	修复bug
