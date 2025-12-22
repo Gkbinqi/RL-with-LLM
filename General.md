@@ -12,7 +12,7 @@
 
 challenge -- 简单实践: 训练 Agent 拆单层魔塔 环境搭建+训练Agent
 
-进阶 & Papers -- RL-Intro & UCB-CS285
+> next -- RL-Intro & UCB-CS285 & Papers
 
 #### RL 基础概念 & 工具
 
@@ -232,9 +232,9 @@ Q_{\theta}(s,a)
 \end{align}
 $$
 
-###### 策略评估 Policy Evaluation
+###### Solving Bellman Equation: 策略评估 Policy Evaluation
 
-即, 通过 Bellman Equation 求解一个策略的值函数
+即, 通过 Bellman Equation 求解一个策略对应的值函数
 
 由于值函数是评价策略效果的指标, 求解一个策略的值函数的过程也被称为 Policy Evaluation
 
@@ -284,10 +284,8 @@ $$
 
 贝尔曼最优公式定义:
 
-* $\text{Bellman Optimality Equation}: V(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}V(s')]$
+* $\text{BOE}: V(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}V(s')]= max_{\pi}\sum_{a{\backsim}{\pi}(a|s)}{\pi}(a|s)Q(s,a)$
 
-  $V(s) = max_{\pi}\sum_{a{\backsim}{\pi}(a|s)}{\pi}(a|s)Q(s,a)$
-  
   $\text{Matrix Vector Form}:v=max_{\pi}(r+{\gamma}Pv)=f(v)$
   
 * 对于 $=$ 的两种理解
@@ -376,9 +374,9 @@ $$
 
 ##### [1] Naive Model-Based
 
-基于 Bellman Optimality Equation 的 基于模型的 最优策略求解方法
+基于已知模型使用 BOE 的最优策略求解方法
 
-* 注意, Bellman Optimality Equation 为输入模型, 求解 最优策略 & 最优值函数 的式子
+* 注意, Bellman Optimality Equation 为: 输入模型, 求解 最优策略 & 最优值函数 的式子
 
 ###### Value Iteration
 
@@ -386,14 +384,14 @@ $$
 
 ###### Truncated Policy Iteration
 
-本质上是操作
+本质操作
 
 * N-times Policy Evaluation
 
-  基于 Bellman Equation 求解当前策略值函数(不一定求出真实值函数, 差不多即可, 保证每次迭代都会优化)
+  基于迭代 Bellman Equation 求解当前策略值函数(不一定求出真实值函数, 大概即可, 保证每次迭代都会优化)
 * Policy Optimization
 
-  基于已有的值函数(不一定合法)对策略进行迭代优化(基于 BOE 的 argmax 操作)
+  基于迭代 BOE 使用已有的值函数(不一定合法)对当前策略进行迭代优化(基于 BOE 的 argmax 操作)
 
 ##### [2] Value-Based Roadmap $Q(s,a)$
 
@@ -681,6 +679,8 @@ $$
 ###### GRPO *Group Relative Policy Optimization*
 
 > paper:
+
+End of policy series
 
 优化掉$V(s)$, 对每组采样计算均值作为baseline
 

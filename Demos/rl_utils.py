@@ -1,5 +1,5 @@
-# 来自RL hands on, 感谢其提供的方便的工具
-# 进行了部分修改以适应Gymnasium环境
+# 原地址: https://github.com/boyu-ai/Hands-on-RL/blob/main/rl_utils.py
+# 基于RL hands on 进行了部分修改以适应Gymnasium环境
 
 from tqdm import tqdm
 import numpy as np
@@ -30,9 +30,10 @@ def moving_average(a, window_size):
     end = (np.cumsum(a[:-window_size:-1])[::2] / r)[::-1]
     return np.concatenate((begin, middle, end))
 
+# 训练 on-policy 智能体
 def train_on_policy_agent(env, agent, num_episodes):
     return_list = []
-    for i in range(10): #
+    for i in range(10):
         with tqdm(total=int(num_episodes/10), desc='Iteration %d' % i) as pbar:
             for i_episode in range(int(num_episodes/10)):
                 episode_return = 0
@@ -50,6 +51,7 @@ def train_on_policy_agent(env, agent, num_episodes):
                     next_state, reward, terminated, truncated, _ = env.step(action)
                     done = terminated or truncated
 
+                    # (s, a, s', r, done)
                     transition_dict['states'].append(state)
                     transition_dict['actions'].append(action)
                     transition_dict['next_states'].append(next_state)
@@ -65,6 +67,7 @@ def train_on_policy_agent(env, agent, num_episodes):
                 pbar.update(1)
     return return_list
 
+# TBD
 def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size, batch_size):
     return_list = []
     for i in range(10):
@@ -88,7 +91,6 @@ def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size
                     pbar.set_postfix({'episode': '%d' % (num_episodes/10 * i + i_episode+1), 'return': '%.3f' % np.mean(return_list[-10:])})
                 pbar.update(1)
     return return_list
-
 
 def compute_advantage(gamma, lmbda, td_delta):
     td_delta = td_delta.detach().numpy()
