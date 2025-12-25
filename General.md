@@ -4,6 +4,8 @@
 
 尽量保证公式符号连贯
 
+同时也算是学习了公式写法...
+
 ###### Resources
 
 数理基础 -- RL的数学原理: https://www.icourse163.org/course/XHUN-1470436188
@@ -246,7 +248,7 @@ r=[r(s_1), r(s_2), {\cdots},r(s_n)]^T\\
 r_i=\mathbb{E}_{a\backsim\pi_{\theta}(a|s_i)}\mathbb{E}_{s'{\backsim}p(s'|s_i,a)}[r(s_i,a,s')]\\
 P_{ij} = p(s_j|s_i) = \sum_{a{\backsim}\pi_\theta(a|s_i)}\pi_\theta(a|s_i)p(s_j|s_i,a)\\
 $$
-基于该表达式, 有两种求解值函数的方法:
+基于该表达式, 有两种求解给定策略的值函数的方法:
 
 * 直接求解 -- 闭式解, 矩阵求逆
 
@@ -268,9 +270,9 @@ $$
 
   可以证明, 迭代无数次后 $v_k$ 与真实值函数 $v_\pi$ 的误差趋零, 精确度足以用于优化策略
   
-* 实践中是通过 element-wise 方法进行迭代求解
-
-  ${\forall}s,V_{k+1}(s)=\sum_{a\backsim\pi_{\theta}(a|s)}{\pi_\theta(a|s)}\sum_{s'\backsim p(s'|s,a)}{p(s'|s,a)}[{r(s,a,s')}+{\gamma}V_k(s')]\\$
+  * 实践中是通过 element-wise 方法进行迭代求解
+  
+    ${\forall}s,V_{k+1}(s)=\sum_{a\backsim\pi_{\theta}(a|s)}{\pi_\theta(a|s)}\sum_{s'\backsim p(s'|s,a)}{p(s'|s,a)}[{r(s,a,s')}+{\gamma}V_k(s')]\\$
 
 ###### 贝尔曼最优公式 BOE *Bellman Optimality Equation*
 
@@ -310,13 +312,20 @@ $$
 * $\pi^*$ 存在, 可能为多个
 * 存在至少一个$\mu^*$
 
-同样基于 Fixed Point Theorem, 可以证明 BOE 可以通过迭代的方式求解
+基于 Fixed Point Theorem, 可以证明 BOE 可通过迭代的方式求解
 
-任意初始 $v_0$, 迭代收敛到 $v^*$ 使得 $v^*=f(v^*)$ 等式成立
+* 任意初始 $v_0$, 迭代收敛到 $v^*$ 使得 $v^*=f(v^*)$ 等式成立
 
-$\text{init $v_0$},iter:v_{k+1}=f(v_k),k=0,1,2,\ldots$
+  $\text{init $v_0$},iter:v_{k+1}=f(v_k),k=0,1,2,\ldots$
 
-###### Note: 基于 Bellman Equation 的 $QVA$ 互推
+具体步骤
+
+对当前步 $v_k$, 求解: $v_{k+1}=f(v_k)=max_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)$
+
+* Policy Update: 求解 $\pi_{k+1}=argmax_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)$
+* Value update: 将 $\pi_{k+1}$ 代入赋值式: $v_{k+1}=r_{\pi_{k+1}}+{\gamma}P_{\pi_{k+1}}v_k$
+
+###### Note: 基于 Bellman Equation 和 $\mathbb{M}$ 的 $QVA$ 互推
 
 $Q(s,a)=\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
 
@@ -328,10 +337,12 @@ $A(s, a) = Q(s, a) - V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V
 
 ###### Model-Based & Model-Free
 
-区别在于对环境知识的掌握程度
+区别在于对环境的模型使用与否
 
-* Model-Based: 显式使用Model函数
-* Model-Free: 没有关于Model的先验知识, 通过交互采样$\mathbb{D}$进行学习
+注意, RL 不同于 Dynamic Programming, 其区分的 Model-Based 和 Model-Free 都没有关于Model的先验
+
+* Model-Based: 通过 $\mathbb{D}$ 学习 Model, 在学习策略过程中显式使用Model相关的函数
+* Model-Free: 不使用 Model 相关函数, 仅通过交互采样 $\mathbb{D}$ 进行学习
 
 没模型就得有数据, 没数据就得有模型, 什么都没有就学不了
 
@@ -353,53 +364,166 @@ $A(s, a) = Q(s, a) - V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V
 
 #### RL 方法概论
 
-##### [Base] 蒙特卡洛特方法 *Monte-Carlo* MC
+##### [0] Dynamic Programming
 
+Dynamic Programming: 给定 Model, 可直接使用于策略学习
+
+基于给定模型使用 BOE 思想的最优策略求解方法
+
+###### Value Iteration
+
+基于 BOE, 通过迭代值函数的方式进行求解
+
+* 任意初始 $v_0$, 迭代收敛到 $v^*$ 使得 $v^*=f(v^*)$ 等式成立
+
+  $\text{init $v_0$},iter:v_{k+1}=f(v_k),k=0,1,2,\ldots$
+
+算法步骤
+
+任意初始 $v_0$, 给定当前 $v_k$, iter: $v_{k+1}=f(v_k)=max_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)$
+
+* Step 1: Policy Update: 
+
+  求解 $max~\pi$: $\pi_{k+1}=arg~max_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)$
+
+* Step 2: Value Update: 
+
+  将 $\pi_{k+1}$ 代入赋值式: $v_{k+1}=max_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)=r_{\pi_{k+1}}+{\gamma}P_{\pi_{k+1}}v_k$
+
+算法实现 -- element-wise form
+
+给定当前 $v_k$ 
+
+* Step 1: Policy Update: 
+
+  ${\forall}s,{\pi}_{k+1}(s)=arg~max_{\pi}{\sum}_{a}{\pi}(a|s){{\sum}_{s'}p(s'|s,a)[r(s,a,s')+{\gamma}v_k(s')]}=arg~max_{\pi}{\sum}_{a}{\pi}(a|s){q_k(s,a)}$
+
+* Step 2: Value Update: 
+
+  ${\forall}s,v_{k+1}(s)={\sum}_{a}{\pi_{k+1}}(a|s){{\sum}_{s'}p(s'|s,a)[r(s,a,s')+{\gamma}v_k(s')]}=max_{a}q_k(s,a)$
+
+需要注意的是, 迭代过程中的 $v_k$ 不保证为合法的值函数, 没有对应的策略也不满足 Bellman Equation
+
+$v_k$ 是求解目标 $v^*$ 过程中的中间状态变量, 标识求解 $v^*$ 第k次迭代的变量的中间值, 同样 $q_k$ 也只是工具变量
+
+###### Policy Iteration
+
+类似于 Value Iteration, 不过 Policy Iter 每次迭代中会求解出当前策略合法的值函数, 再基于此进行策略优化
+
+算法步骤
+
+init $\pi_0$, 给定当前策略 $\pi_k$
+
+* Step 1: Policy Evaluation: $v_{\pi_k}=r_{\pi_k}+{\gamma}P_{\pi_k}v_{\pi_k}$
+
+  Policy Eva, 使用迭代方法求解 $\pi_k$ 的值函数 $v_{\pi_k}$, $v_{\pi},q_{\pi}$下标代表该值函数是有对应策略的合法值函数
+
+  迭代直到 $v_{\pi_k}^{j}$ 收敛, 然后由 $v_{\pi_k}$ 推导得到 $q_{\pi_k}$
+
+* Step 2: Policy Improvement: $\pi_{k+1}=argmax_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_{\pi})$
+
+  同 Policy Update, 不过这里使用的是合法的值函数
+
+  ${\forall}s,{\pi}_{k+1}(s)=arg~max_{\pi}{\sum}_{a}{\pi}(a|s){{\sum}_{s'}p(s'|s,a)[r(s,a,s')+{\gamma}v_{\pi_k}(s')]}=arg~max_{\pi}{\sum}_{a}{\pi}(a|s)q_{\pi_k}(s,a)$
+
+  可以观察到, 在更新策略的过程中我们实际上使用的是 $q_{\pi_k}(s,a)$ 作为更新的依据
+
+算法实现 -- element-wise form
+
+给定当前策略 $\pi_k$
+
+* Step 1: Policy Evaluation: 
+
+  $iter:{\forall}s,v_{\pi_k}^{j+1}(s)={\sum}_a{\pi}(a|s){\sum}_{s'}[r(s,a,s')+{\gamma}v_{\pi_k}^j(s')],{\text{until converge($j{\geq}n$ or $||v_{\pi_k}^{j+1}-v_{\pi_k}^j||{\leq}{\epsilon}$)}}$
+
+  计算 $q_{\pi_k}(s,a)$: ${\forall}(s,a),q_{\pi_k}(s,a)={\sum}_{s'}p(s'|s,a)[r(s,a,s')+{\gamma}v_{\pi_k}(s')]$
+
+* Step 2: Policy Improvement: 
+
+  ${\forall}s,{\pi}_{k+1}(s)=arg~max_{\pi}{\sum}_{a}{\pi}(a|s){{\sum}_{s'}p(s'|s,a)[r(s,a,s')+{\gamma}v_{\pi_k}(s')]}=arg~max_{\pi}{\sum}_{a}{\pi}(a|s){q_{\pi_k}(s,a)}$
+
+###### Truncated Policy Iteration
+
+本质操作
+
+* N-times Policy Evaluation (Value Update)
+
+  N次迭代 Bellman Equation 求解当前策略值函数(不一定求出真实值函数, 大概即可)
+  
+* Policy Improvement (Policy Update)
+
+  使用已有的值函数(不一定合法)对当前策略进行优化 (argmax 操作)
+
+###### General Policy Iteration GPI
+
+泛指有着类似 PI 形式的一类策略迭代优化方法
+
+具体为, 此类方法可以概括为两个步骤
+
+* Step 1: Policy Evaluation
+
+  求出当前策略的值函数
+
+* Step 2: Policy Improvement
+
+  基于当前策略的值函数, 优化策略
+
+##### [Base] 蒙特卡洛 *Monte-Carlo* MC
+
+基于 大数定理, 我们可以通过采样来估计期望值, 由此来进行基于数据的无模型的学习
 $$
 \begin{align}
-	原理:&\mathbb{E}(x)\approx\frac{1}{N}\sum^{N}_{i=1}(x_i),N\rightarrow\infty\\
-	e.g.&\underbrace{\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]}_{\tau\backsim p_{\theta}(\tau)空间过大~不适合直接求期望}\approx\frac{1}{N}\sum_{n=1}^N[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)]
+	&\mathbb{E}(x)\approx\frac{1}{N}\sum^{N}_{i=1}(x_i),N\rightarrow\infty,x_i满足iid\\
+	&e.g.\underbrace{\Bbb E_{\tau\backsim p_{\theta}(\tau)}[G(\tau)\nabla_{\theta}\log p_{\theta}(\tau)]}_{\tau\backsim p_{\theta}(\tau)空间过大~不适合直接求期望}\approx\frac{1}{N}\sum_{n=1}^N[G(\tau^n)\nabla_{\theta}\log p_{\theta}(\tau^n)]
 \end{align}
 $$
 
-* 全部使用采样得到真实奖励 偏差小
-* 实际中不同采样间差别极大 方差大
+通过 MC 的得到的估计值是一个无偏估计
 
-##### [Base] 时序差分法 *Temporal Difference* TD
+###### MC-Basic
+
+由于没有模型, 观察 PI 的策略优化过程, 可以发现, 能够通过 $q_{\pi_k}(s,a)$ 避免显式使用模型
+
+同时, 由于没有模型, 也无法通过状态值函数推导动作值函数: $Q(s,a)=\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
+
+所以, 在这里我们通过 MC 直接求 $q_{\pi_k}(s,a)$, 绕过状态值函数, 使用 $q_{\pi_k}(s,a)$ 进行策略优化
+
+算法步骤
+
+* 给定策略 $\pi$
+
+  ${\forall}(s,a){\in}S{\times}A,sample:q_k(s,a)=\frac{1}{N}\sum_{i=1}^Ng(s,a)$
+
+  对每个 $(s,a)$ pair, 均需要进行充分次数的采样, 然后以此估计 $q(s,a)$
+
+###### MC-Exploring Starts
+
+在 Policy Improvement 阶段, 我们需要所有 $(s,a)$ pair才能实现有效的更新
+
+为了保证每个 $(s,a)$ pair 都得到了访问采样, 我们选择对所有 $(s,a)$ 为起点, 均采样足够条轨迹
+
+相较于 MC-Basic, 会通过 first/every visitation 策略, 让每条轨迹都能对各个 $(s,a)$ 提供样本
+
+###### MC-Epsilon Greedy
+
+为了提高效率, 避免过多的采样, 将策略改为 soft Policy
+
+这样, 在一条足够长的轨迹中, 我们就可以采样到所有的 $(s,a)$ pair
+
+##### [Base] 时序差分 *Temporal Difference* TD
 
 基于单步采样, 逐步引入真实信息
 
 * 方差小
 * 由于依赖于估计值 偏差大
 
-##### [1] Naive Model-Based
-
-基于已知模型使用 BOE 的最优策略求解方法
-
-* 注意, Bellman Optimality Equation 为: 输入模型, 求解 最优策略 & 最优值函数 的式子
-
-###### Value Iteration
-
-###### Policy Iteration
-
-###### Truncated Policy Iteration
-
-本质操作
-
-* N-times Policy Evaluation
-
-  基于迭代 Bellman Equation 求解当前策略值函数(不一定求出真实值函数, 大概即可, 保证每次迭代都会优化)
-* Policy Optimization
-
-  基于迭代 BOE 使用已有的值函数(不一定合法)对当前策略进行迭代优化(基于 BOE 的 argmax 操作)
-
-##### [2] Value-Based Roadmap $Q(s,a)$
+##### [1] Value-Based Roadmap $Q(s,a)$
 
 > 适用于离散有限动作域$A$
 >
 > 由于可选动作有限, 决策时直接带入所有Action, 选择Q最大的Action即可
 
-###### Tabular Q-Learning
+###### Increment Idea: Tabular Q-Learning
 
 * 用于离散$S$+离散$A$
 
@@ -417,7 +541,9 @@ $$
 
 > paper: https://arxiv.org/abs/1312.5602
 >
-> code: todo
+> code: 
+
+首次在 RL 中引入 DNN 并取得显著成果
 
 使用深度网络模拟Q函数, 解决$S$空间过大/连续问题
 
@@ -437,37 +563,13 @@ $$
 
 核心tricks
 * 目标网络冻结 *freezing target networks*
-  * 实际上会维护两个网络, main 和 target, targetNet用于提供计算loss时的target值
-  * 会"冻结"targetNet的参数, 避免其变化过大以稳定学习目标
-    * 对targetNet使用多步更新或者软更新(soft update)
+  * 实际上会维护两个网络, main 和 target, targetNet 用于提供计算loss时的target值
+  * 会"冻结" targetNet 的参数, 避免其变化过大以稳定学习目标
+    * 对 targetNet 使用多步更新或者软更新(soft update)
     * soft update: $\theta_{target}\leftarrow\theta_{traget}+\tau\theta_{main}(for~example,\tau~can~be~0.005)$
 * 经验回放 *experience replay*
   * 构建一个经验池来去除数据相关性, 同时提高数据利用率 -- off-policy
   * 实践中即为Replay-Buffer: $(s,a,s',r,terminal)$
-
-###### Double Q
-
-> paper:
->
-> code:
-
-
-
-###### Dual Q
-
->paper:
->
->code:
-
-
-
-###### Rainbow Q
-
-> paper:
->
-> code:
-
-
 
 ##### [2] Actor-Critic Roadmap
 
@@ -579,7 +681,7 @@ Fisher 信息矩阵 FIM
 
 
 
-###### $\cal{PolicyImprovement}$ TRPO *Trust Region Policy Optimization*
+###### $\cal{Policy~Improvement}$ TRPO *Trust Region Policy Optimization*
 
 > paper:
 >
@@ -684,9 +786,11 @@ End of policy series
 
 优化掉$V(s)$, 对每组采样计算均值作为baseline
 
-##### [4] Modern Model-Based Roadmap
+##### [4] Model-Based Roadmap
+
+通过 $\mathbb{D}$ 训练出一个对环境的预测模型(然后将此模型带入到原始的 Bellman中?)
 
 ###### World Model
 
-> paper:
+> paper:https://arxiv.org/abs/1803.10122
 

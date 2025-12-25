@@ -90,10 +90,10 @@ class GameConfig:
 
     # --- 难度动态配置 ---
     # 每多一层，怪物属性提升的百分比
-    FLOOR_SCALING_HP = 0.15   # 血量每层 +15%
-    FLOOR_SCALING_ATK = 0.08  # 攻击每层 +8% 
+    FLOOR_SCALING_HP = 0.2   # 血量每层 +20%
+    FLOOR_SCALING_ATK = 0.05  # 攻击每层 +5% 
     FLOOR_SCALING_DEF = 0.05  # 防御每层 +5%
-    FLOOR_SCALING_REWARD = 0.2 # 金币经验每层 +20% (略高于怪物强度，给 Agent 容错空间)
+    FLOOR_SCALING_REWARD = 0.05 # 金币经验每层 +5% (略低于属性提升, 促进游戏结束)
 
     # --- 怪物数据 ---
     MONSTERS: Dict[int, MonsterProps] = {

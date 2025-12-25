@@ -94,7 +94,7 @@ class ConsoleRenderer:
             f"> {ANSI.BOLD}{info}{ANSI.RESET}{ANSI.CLEAR_LINE}",
             f"{'-' * 30}{ANSI.CLEAR_LINE}",
             # [Mod] 增加炸弹提示
-            f"[WASD]移动 [ZXC]商店 [E]炸弹(消耗EXP) [Q]退出{ANSI.CLEAR_LINE}",
+            f"[WASD]移动 [ZXC]商店 [B]炸弹(消耗EXP) [E]退出{ANSI.CLEAR_LINE}",
             f"{ANSI.CLEAR_LINE}"
         ]
         buffer.extend(footer_lines)
@@ -106,6 +106,6 @@ class ConsoleRenderer:
 
     def _color_hp(self, hp):
         """根据血量给颜色"""
-        if hp > 500: return f"{ANSI.GREEN}{hp:<5}{ANSI.RESET}"
-        if hp > 200: return f"{ANSI.YELLOW}{hp:<5}{ANSI.RESET}"
+        if hp > 5000: return f"{ANSI.GREEN}{hp:<5}{ANSI.RESET}"
+        if hp > 2000: return f"{ANSI.YELLOW}{hp:<5}{ANSI.RESET}"
         return f"{ANSI.RED}{hp:<5}{ANSI.RESET}"

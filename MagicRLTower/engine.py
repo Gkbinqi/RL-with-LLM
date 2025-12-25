@@ -9,7 +9,7 @@ from map_gen import generate_random_map
 # 以及, 适用 RL 的 step/reset 接口维护设计
 # 具体的实体交互判断和计算, 由 mechanics.py 负责
 class MagicRLTower:
-    def __init__(self, map_size=25):
+    def __init__(self, map_size=21):
         self.map_size = map_size
         self.floor = 0
         self.reset()
