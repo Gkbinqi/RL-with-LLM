@@ -362,6 +362,10 @@ $A(s, a) = Q(s, a) - V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V
     * 使用 $\theta_{ref}$ 生成 $\mathbb{D}$, 然后用 $\mathbb{D}$ 更新目标策略 $\theta$
   * 一般数据可以多次复用
 
+###### Stochastic Approximation
+
+详见 RL-math 第六章, 数学基础
+
 #### RL 方法概论
 
 ##### [0] Dynamic Programming
@@ -495,6 +499,8 @@ $$
   ${\forall}(s,a){\in}S{\times}A,sample:q_k(s,a)=\frac{1}{N}\sum_{i=1}^Ng(s,a)$
 
   对每个 $(s,a)$ pair, 均需要进行充分次数的采样, 然后以此估计 $q(s,a)$
+  
+  然后基于 $q(s,a)$, 更新策略 ${\forall}s,\pi_{k+1}(s)=argmax_a[q(s,a)]$
 
 ###### MC-Exploring Starts
 
