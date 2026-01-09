@@ -14,7 +14,7 @@
 
 challenge -- 简单实践: 训练 Agent 拆单层魔塔 环境搭建+训练Agent
 
-> next -- RL-Intro & UCB-CS285 & Papers
+> next -- Math, RL-Intro, UCB-CS285 & Papers
 
 #### RL 基础概念 & 工具
 
