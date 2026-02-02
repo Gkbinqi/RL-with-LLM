@@ -1,10 +1,12 @@
 #### 前言
 
-仅关注基础理解, 路径, 经典方法的代码
+Basic, basic...
+
+仅关注入门的基础理解, 大致路径, 经典方法的代码
 
 尽量保证公式符号连贯
 
-同时也算是学习了公式写法...
+同时也算是学习了latex风格公式写法...
 
 ###### Resources
 
@@ -12,202 +14,206 @@
 
 代码基础 -- 动手学强化学习: https://hrl.boyuai.com/chapter/intro/
 
-challenge -- 简单实践: 训练 Agent 拆单层魔塔 环境搭建+训练Agent
+> next -- UCB-CS285
 
-> next -- Math, RL-Intro, UCB-CS285 & Papers
+#### Fundamental: RL 基础概念 & 工具
 
-#### RL 基础概念 & 工具
-
-##### RL 定义
+##### RL定义 & Markov 框架
 
 $$
 S:状态空间;~A:动作空间;~R:奖励空间;~\Delta(Space):在Space上的概率分布;\\
-\theta:模型参数;~\mathbb{D}:数据;~\mathbb{M}:世界模型
+\pi:策略;\theta:策略模型的参数;~\mathbb{D}:数据/经验;~\mathbb{M}:Env模型/model
 $$
-
-
 
 RL问题可以描述为: Agent 从与 Environment 的**交互**历史信息中 不断学习以完成特定目标
 
 RL的普遍目标: 学习 **Optimal Policy** $\pi^*_{\theta}$ --  实现最大化期望回报 $J(\theta)$ 
 
-* 交互: Agent 依据其策略 $\pi_\theta$ 在观察的State选择Action, **状态转移**到新状态并获得Reward的过程
+* 交互: Agent 依据其策略 $\pi_\theta$ 在观察到的 State 选择 Action, 进行**状态转移**并获得Reward的过程
 
-  Agent 根据**反馈信息**($s', r$) 学习最优策略 $\pi^*_\theta$
+  Agent 根据**反馈信息**($s', r$) 学习
 
-###### **马尔可夫决策过程** *Markov Decision Process* MDP
+###### **马尔可夫决策过程** Markov Decision Process (MDP)
 
-RL 一般将问题建模为MDP: Space + Policy + Markov
+RL 一般将问题建模为MDP: Markov(M) + Policy(D) + Space(P)
 
 Markov特性: **历史无关** (Memoryless)
 
 * 状态转移仅取决于系统**当前**状态和动作, 与系统过去或未来任意状态动作都不相关
 
 * $p(s'|s,a)$ 状态转移的输出只与输入的当前的s和a有关, 与之前任意步的s和a无关
-  * $p(s_{t+1},|s_t,a_t)=p(s_{t+1}|s_0,a_0,s_1,a_1,\ldots,s_t,a_t)$
+
+  $p(s_{t+1}|s_t,a_t)=p(s_{t+1}|s_0,a_0,s_1,a_1,\ldots,s_t,a_t)$
+
+###### 空间 Space
+
+#状态 State $s{\in}S$
+
+Agent 观察到的自身在 Env 中的状态
+
+* Observation: State的子集(或者说, 残缺信息, Ob也可能是State的低维信息)
+  * Agent未必能获得State的所有维度, 有时其只能获得部分维度的信息, 并且可能有噪声
   
-    也可以理解为, 我们相信Env反馈的State已经包含了我们所做的行为的能影响到的所有信息
-
-###### 空间
-
-* 状态 State $s{\in}S$
-
-  Agent 观察到的自身在 Env 中的状态
-
-  * Observation: State的子集(或者说, 残缺信息, Ob也可能是State的低维信息)
-    * Agent未必能获得全部的State, 有时其只能获得Ob到的部分State信息, 并且可能有噪声
-    
-      方便起见, 简单问题中我们假设Agent能直接获得Env的真实状态State, 即$o=s$
-  * 环境中有一个或多个特殊的终止状态(terminal state; absorbing state)
-
-* 动作 Action $a{\in}A$
-
-  Agent 能采取的行动
-
-* 奖励 Reward $r{\in}\mathbb{R}$
-
-  Reward 是环境给 Agent 的反馈, **其定义会决定模型的优化方向**
+    方便起见, 简单问题中我们假设Agent能直接获得Env的所有信息, 即$o=s$
   
-  * Reward 可以视为人类与 Agent 交互的接口, 通过 Reward 指导 Agent 的行为
-  
-    关于 Reward 有很多讨论研究, 很关键的部分
+* 环境中可以有一个或多个特殊的终止状态(terminal; absorbing)
+
+* 也可以truncated, 在一定时间或步数后主动终止
+
+#动作 Action $a{\in}A$
+
+Agent 能采取的行动
+
+#奖励 Reward $r{\in}\mathbb{R}$
+
+Reward 是环境给 Agent 的反馈, **其定义会决定模型的优化方向**
+
+* Reward 可以视为人类与 Agent 交互的接口, 人通过 Reward 指导评估 Agent 的行为
+
+  关于 Reward 有很多讨论研究, 是很关键的部分
 
 ###### 智能体 Agent
 
 观察 State, 依据其 Policy 做出决策 Action 与 Env 进行交互的实体
 
-* **策略 Policy** $\pi_{\theta}(a|s);\mu_\theta(s)$
-
-  决定Agent在状态s下采取什么行动a
-
-  * $Stochastic: \pi_{\theta}(a|s)$
-    * $S\rightarrow\Delta(A)$, 随机策略$\pi_\theta(a|s)$, 输出a的分布
-  * $Deterministic:a=\mu_\theta(s)$
-    * $S{\rightarrow}A$, 确定性策略, 输出具体动作
-
-###### 环境 Environment Env
+###### 环境 Environment (Env)
 
 接收 Agent 的 Action 而改变 State, 并反馈 $(s',r)$ 的与 Agent 交互的实体
 
-* **模型 Model** $\mathbb{M}$
+#模型 Model $\mathbb{M}$
 
-  即 Env 的运行规律, RL里一般特指由环境决定的函数 $Model = \{r(s,a,s'), p(s'|s,a)\}$
+即 Env 的运行规律, RL里一般特指由环境决定的函数 $Model = \{r(s,a,s'), p(s'|s,a)\}$
 
-  * **状态转移概率** *Transition Function*: $p(s'|s, a)$
+* **状态转移概率** *Transition Function*: $p(s'|s, a)$
 
-    智能体根据当前状态$s$选择动作$a$后，下一个时刻状态 $s'$ 的概率分布
+  智能体根据当前状态$s$选择动作$a$后，下一个时刻状态 $s'$ 的概率分布
 
-    $S\times A\rightarrow \Delta(S)$
-    * $(s,a)$往往只能确定$s'$的分布, 而不是总是导向单个$s'$
+  $S\times A\rightarrow \Delta(S)$
+  * $(s,a)$往往只能确定$s'$的分布, 而不是总是导向单个$s'$
 
-      例如, 机器人走路遇到障碍(s), 选择跳过去(a), 可能平稳落地($s^{'}_1$)也可能摔倒($s^{'}_2$)
+    例如, 机器人走路遇到障碍(s), 选择跳过去(a), 可能平稳落地($s^{'}_1$)也可能摔倒($s^{'}_2$)
 
-  * **奖励函数** *Reward Function*: $r(s, a, s')$ or $p(r|s,a)$
+* **奖励函数** *Reward Function*: $r(s, a, s')$ or $r(s,a)$
 
-    $S × A × S → \mathbb{R}$ or $S × A {\rightarrow}\Delta(\mathbb{R}) $
+  $S × A × S → \mathbb{R}$ or $S × A {\rightarrow}\Delta(\mathbb{R}) $
 
-    * 需要注意, 返回的奖励与到达的新状态也有关
+  * 需要注意, 返回的奖励与到达的新状态也有关
 
-      如前例, 遇碍(s)跳(a), 平稳落地($s^{'}_1$)或摔倒($s^{'}_2$), 两种新状态reward不同
+    如前例, 遇碍(s)跳(a), 平稳落地($s^{'}_1$)或摔倒($s^{'}_2$), 两种新状态reward不同
 
-###### 历史建模 & 评估指标
+###### 策略 Policy
 
-* 轨迹 Trajectory $\tau$
+决定Agent在状态s下采取什么行动a
 
-  对MDP一次过程的记录
+#Stochastic: $\pi_{\theta}(a|s)$
 
-  $\tau = \{s_0, a_0, r_1, s_1, \cdots, s_{T-1}, a_{T-1}, r_T, s_T \}$
+* $S\rightarrow\Delta(A)$, 随机策略$\pi_\theta(a|s)$, 输出a的分布
 
-  * ⭐在参数$\theta$下, 特定路径$\tau$出现的概率可以用Policy和Transition Function连乘表示
+#Deterministic: $a=\mu_\theta(s)$
 
-    $p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}$
-    
-  * Episode
+* $S{\rightarrow}A$, 确定性策略, 输出具体动作
 
-    一条结束于 terminal state 的有限长的轨迹
+###### 轨迹 Trajectory $\tau$
 
-    对于在 Episode 上工作的任务, 即任务会在合理步数内结束, 我们将其称为 Episodic Task 
+对一次MDP的历史记录
 
-* 回报 Return $G_t$
+$\tau = \{s_0, a_0, r_1, s_1, \cdots, s_{T-1}, a_{T-1}, r_T, s_T \}$
 
-  一条 $\tau$ 中全过程 Reward 的总和
+* 在参数$\theta$下, 特定路径$\tau$出现的概率可以用Policy和Transition Function连乘表示
 
-  Return 可用于评估策略的效果
+  $p_\theta(\tau) = p(s_0) \displaystyle  \prod^{T-1}_{t=0}{\pi_{\theta}(a_t|s_t)p(s_{t+1}|s_t, a_t)}$
 
-  * **折扣总回报** Discounted Return: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
+* Episode
 
-    一条 $\tau$ 中全过程 Reward 的折扣后总和, 实际中使用的 Return
-    
-    从任意时刻 $t_0$ 开始计算: $G(\tau_{t_0})=G_{t_0}=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}=r_{t_0+1}+\gamma G_{t_0+1}$
-    
-  * $\gamma\in[0,1)$为折扣率 *discount rate*
-    
-    * $\gamma$ 使得我们能够建模无限长轨迹的回报, 并能控制 Agent 的视野范围
-    
-      当$\gamma\rightarrow 0$时，Agent 更在意短期回报；当$\gamma\rightarrow 1$时，长期回报变得更重要
+  一条结束于 terminal state 的有限长的轨迹
 
-* 期望回报 Expected Return $J(\theta)$
+  对于在 Episode 上工作的任务, 即任务会在合理步数内结束, 我们将其称为 Episodic Task 
 
-  基于回报的定义, 通过计算给定策略下**回报的期望值**精确建模策略的效果
+###### 回报 Return $G_t$
 
-  $J(\theta)=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[\sum^{T-1}_{t=0}{\gamma^tr_{t+1}}]$ 
+一种评估策略 $\theta$ 的效果的指标
+
+一条 $\tau$ 中全过程 Reward 的总和
+
+#**折扣总回报** Discounted Return: $G(\tau) = \sum^{T-1}_{t=0}{\gamma^tr_{t+1}}$
+
+一条 $\tau$ 中全过程 Reward 的折扣后总和, 实际中使用的 Return
+
+从任意时刻 $t_0$ 开始计算: $G(\tau_{t_0})=G_{t_0}=\sum_{t=t_0}^{T-1}\gamma^{t-t_0}r_{t+1}=r_{t_0+1}+\gamma G_{t_0+1}$
+
+* $\gamma\in[0,1)$为折扣率 *discount rate*
+  
+  * $\gamma$ 使得我们能够建模无限长轨迹的回报, 并能控制 Agent 的视野范围
+  
+    当$\gamma\rightarrow 0$时，Agent 更在意短期回报；当$\gamma\rightarrow 1$时，长期回报变得更重要
+
+###### 期望回报 Expected Return $J(\theta)$
+
+基于回报的定义, 通过计算给定策略 $\theta$ 下**回报的期望值**精确建模策略的效果
+
+$J(\theta)=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[\sum^{T-1}_{t=0}{\gamma^tr_{t+1}}]$ 
 
 ##### 值函数定义
 
-值函数是 基于给定策略 得到的对状态的价值的评估 (执行策略 $\pi_\theta$ 的期望总回报)
+我们定义, 在给定的环境中, 每一个策略都有对应的**价值函数**, 该函数能够计算出从输入状态开始, 执行**当前策略**到结束时能获得的**期望回报**
+
+这一定义得到了数学和实验层面的验证, 值函数确实存在且可求解
+
+> 在当前环境(或者说, 任务)下 基于给定策略 得到的对状态的价值的评估 (执行策略 $\pi_\theta$ 的期望总回报)
 
 值函数可以作为评估策略效果的一种方法/依据, 策略的值函数越大, 该策略越优秀
 
-###### 状态值函数 *State-Value Function* $V_{\theta}(s)$
+###### 状态值函数 State-Value Function $v_{\pi}(s)$
 
 描述从状态s开始, 执行策略 $\pi_{\theta}$ 得到的的**期望回报**
 
-$Def:V_{\theta}(s) = \mathbb{E}_{\tau\backsim p_\theta(\tau)}[G_t|s_t = s]$
+Def: $v_{\pi}(s) = \mathbb{E}_{\tau\backsim p_\theta(\tau)}[G_t|s_t = s]$
 
-* 函数性质: 
+#函数性质: 
 
-  状态值函数是接收 s 作为输入的函数
+状态值函数是接收 s 作为输入的函数
 
-  状态值函数是基于 Policy 的函数
+状态值函数是基于 Policy 的函数
 
-  $V_\theta(s) \iff V(s; \pi_\theta)$
+$v_\pi(s) \iff v(s; \pi_\theta)$
 
-###### 动作值函数 *Action-Value Function* $Q_\theta(s, a)$
+###### 动作值函数 *Action-Value Function* $q_{\pi}(s, a)$
 
-描述从状态s开始并选择动作a后, 执行策略 $\pi_{\theta}$ 得到的期望回报
+描述从在状态s选择动作a后开始, 执行策略 $\pi_{\theta}$ 得到的期望回报
 
-$Def: Q_{\theta}(s,a)=\mathbb{E}_{\tau\backsim p(\tau)}[G_t|s_t = s,a_t=a]$
+Def: $q_{\pi}(s,a)=\mathbb{E}_{\tau\backsim p(\tau)}[G_t|S_t = s,A_t=a]$
 
-* 函数性质
+#函数性质
 
-  动作值函数是接收 $(s,a)$ 状态动作对 作为输入的函数
+动作值函数是接收 $(s,a)$ 作为输入的函数
 
-  动作值函数是基于 Policy 的函数
+动作值函数是基于 Policy 的函数
 
-  $Q_\theta(s,a) \iff Q(s,a; \pi_\theta)$
+$q_\pi(s,a) \iff q(s,a; \pi_\theta)$
 
-###### 优势函数 *Advantage Function* $A_\theta(s, a)$
+###### 优势函数 Advantage Function $A_{\theta}(s, a)$
 
-描述在$s$下选择特定动作$a$相较于整体预期回报能带来的额外回报(优势)
+描述在 $s$ 下选择特定动作 $a$ 较动作空间整体预期回报具有的额外回报(优势)
 
-$Def: A_\theta(s,a)=Q(s,a)-V(s)$
+Def: $A_\theta(s,a)=q(s,a)-v(s)$
 
-##### 贝尔曼工具 Bellman
+##### 贝尔曼工具
 
 定义了值函数后, 我们需要求解策略的值函数的方法
 
 Bellman 公式 提供了求解值函数的工具
 
-###### 贝尔曼公式 Bellman Equation
+###### 贝尔曼公式 Bellman Equation (Bellman Equ)
+
+贝尔曼公式描述了合法值函数之间的依赖关系
 
 给定策略 $\theta$ 和 $\mathbb{M}$, $\theta$ 合法的值函数能够通过递归的方式表示
 
-$状态值函数: \forall{s}\in{S},{V}_{\theta}(s) = \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]$ 
-
+#状态值函数: $\forall s{\in}S,{v}_{\pi}(s) = \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]$ 
 $$
 \begin{align}
-V_{\theta}(s) 
-	&=\mathbb{E}_{\tau{\backsim}p_\theta(\tau)}[G_t|s_t = s]\\
+v_{\pi}(s) 
+	&=\mathbb{E}_{\tau{\backsim}p_\theta(\tau)}[G_t|S_t = s]\\
 	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\mathbb{E}_{\tau\backsim p_\theta(\tau)}[G_t|s_t=s, a_t=a]
 		&确定a\\
 	&=\sum_{a\backsim\pi_{\theta}(a|s)}\pi_{\theta}(a|s)\sum_{s'\backsim p(s'|s,a)}p(s'|s,a)\mathbb (r(s,a,s')+\gamma \mathbb{E}[G_{t+1}|s_{t+1}=s'])
@@ -217,15 +223,15 @@ V_{\theta}(s)
 \end{align}
 $$
 
-* 描述基于策略 $\pi_\theta$ 的所有状态 $s$ 的值函数之间的依赖关系
+* 描述基于策略 $\pi_\theta$ 的, 所有状态 $s$ 的值函数之间的依赖关系
   
-  * 有n个状态就会有n个式子, 联立求解即可得到值函数
+  * 有n个状态, 就会有n个式子. 联立求解, 即可得到值函数
   
-  * 对于真实的值函数, 贝尔曼公式 ${\forall}s{\in}S$ 成立
+  * 对于合法值函数, 贝尔曼公式 ${\forall}s{\in}S$ 成立
     
-    若存在任一状态时等式不成立, 此时该值函数非真实值函数, 只能部分建模策略的期望回报, 仍需优化
+    若存在任一状态, 该等式不成立, 此时该 estimation 与真实值函数仍存在误差
 
-$动作值函数: \forall{(s,a)}\in{S{\times}A},Q_{\theta}(s,a)=\mathbb{E}_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
+#动作值函数: $\forall{(s,a)}\in{S{\times}A},q_{\pi}(s,a)=\mathbb{E}_{s^{'}\backsim p(s^{'}|s, a)}[r(s, a, s') + \gamma \mathbb{E}_{a'\backsim \pi_{\theta}(a'|s')}[q_{\pi}(s',a')]]$
 $$
 \begin{align}
 Q_{\theta}(s,a)
@@ -234,7 +240,7 @@ Q_{\theta}(s,a)
 \end{align}
 $$
 
-###### Solving Bellman Equation: 策略评估 Policy Evaluation
+###### 策略评估 Policy Evaluation (PE) -- Solving Bellman Equation
 
 即, 通过 Bellman Equation 求解一个策略对应的值函数
 
@@ -250,51 +256,55 @@ P_{ij} = p(s_j|s_i) = \sum_{a{\backsim}\pi_\theta(a|s_i)}\pi_\theta(a|s_i)p(s_j|
 $$
 基于该表达式, 有两种求解给定策略的值函数的方法:
 
-* 直接求解 -- 闭式解, 矩阵求逆
+#直接求解 -- 闭式解, 矩阵求逆
 
-  $v=r+{\gamma}Pv~{\Rightarrow}~v=(I-{\gamma}P)^{-1}r$
+$v=r+{\gamma}Pv~{\Rightarrow}~v=(I-{\gamma}P)^{-1}r$
 
-  直接通过线代变换求解, 得到的v为真实值函数 $v_\pi$
+直接通过线代变换求解, 得到的v为真实值函数 $v_\pi$
 
-  不过需要做 $O(n^3)$ 的矩阵求逆操作, 以及优化 Policy 并不需要求解特别精确的值函数
+不过需要做 $O(n^3)$ 的矩阵求逆操作, 以及优化 Policy 并不需要求解特别精确的值函数
 
-  特别的, $(I-{\gamma}P)^{-1}$ 矩阵是 折扣状态访问频率矩阵
+特别的, $(I-{\gamma}P)^{-1}$ 矩阵是 折扣状态访问频率矩阵
 
-  优美, 但实践中一般不会使用
+优美, 但实践中一般不会使用
 
-* 迭代求解
+#迭代求解
 
-  $init:v_0,v_0可为任意初始向量,也可为\vec{0}$
+init: $v_0,v_0可为任意初始向量,也可为\vec{0}$
 
-  $iter: v_{k+1}=r+{\gamma}Pv_k,k{\rightarrow}{\infty}$
+iter: $v_{k+1}=r+{\gamma}Pv_k,k{\rightarrow}{\infty}$
 
-  可以证明, 迭代无数次后 $v_k$ 与真实值函数 $v_\pi$ 的误差趋零, 精确度足以用于优化策略
-  
-  * 实践中是通过 element-wise 方法进行迭代求解
-  
-    ${\forall}s,V_{k+1}(s)=\sum_{a\backsim\pi_{\theta}(a|s)}{\pi_\theta(a|s)}\sum_{s'\backsim p(s'|s,a)}{p(s'|s,a)}[{r(s,a,s')}+{\gamma}V_k(s')]\\$
+可以证明, 迭代无数次后, estimator $v_k$ 与真实值函数 $v_\pi$ 的误差趋零, 精确度足以用于优化策略
 
-###### 贝尔曼最优公式 BOE *Bellman Optimality Equation*
+#迭代算法实现
+
+实践中, 通过 element-wise 方法进行迭代求解
+
+${\forall}s,v_{k+1}(s)=\sum_{a\backsim\pi_{\theta}(a|s)}{\pi_\theta(a|s)}\sum_{s'\backsim p(s'|s,a)}{p(s'|s,a)}[{r(s,a,s')}+{\gamma}v_k(s')]\\$
+
+###### 贝尔曼最优公式 Bellman Optimality Equation (BOE)
 
 基于策略的值函数, 我们可以此作为评估依据优化策略以逼近目标 -- $\pi^*_\theta$
 
 首先定义目标 Optimal Policy, Optimal State Value 为何
 
-* 最优策略 $\pi^*$ 满足: ${\forall}s,V_{\pi^*}(s){\geq}V_\pi(s)\text{ for any other Policy $\pi$}$
+* 我们定义, 最优策略 $\pi^*$ 满足: ${\forall}s,v_{\pi^*}(s){\geq}v_\pi(s)\text{ for any other Policy $\pi$}$
 
-  $V^*(s)=V_{\pi^*}(s)$ 最优值函数即为最优策略的值函数
+  $v^*(s){\iff}v_{\pi^*}(s)$ 最优策略的值函数, 即为最优值函数
 
-贝尔曼最优公式定义:
+#BOE定义:
 
-* $\text{BOE}: V(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}V(s')]= max_{\pi}\sum_{a{\backsim}{\pi}(a|s)}{\pi}(a|s)Q(s,a)$
+* BOE: $v(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}v(s')]= max_{\pi}\sum_{a{\backsim}{\pi}(a|s)}{\pi}(a|s)Q(s,a)$
 
-  $\text{Matrix Vector Form}:v=max_{\pi}(r+{\gamma}Pv)=f(v)$
+  Matrix Vector Form: $v=max_{\pi}(r+{\gamma}Pv)=f(v)$
   
 * 对于 $=$ 的两种理解
 
   当左右两边值相等时, 此时 $=$ 代表等式成立, 这里的 $v$ 即为 $v^*$, 对应 $\pi^*$
 
   当左右两边的值不相等时, 此时 $v{\neq}v^*$, 等号可以视为一次迭代的赋值符号 $v_{k+1}{\leftarrow}f(v_k)$
+
+#BOE理解
 
 本质上, BOE 是一种特殊的 Bellman 公式
 
@@ -312,18 +322,24 @@ $$
 * $\pi^*$ 存在, 可能为多个
 * 存在至少一个$\mu^*$
 
+#算法步骤
+
 基于 Fixed Point Theorem, 可以证明 BOE 可通过迭代的方式求解
 
 * 任意初始 $v_0$, 迭代收敛到 $v^*$ 使得 $v^*=f(v^*)$ 等式成立
 
   $\text{init $v_0$},iter:v_{k+1}=f(v_k),k=0,1,2,\ldots$
 
-具体步骤
+###### 值迭代 Value Iteration (VI) -- Solving BOE
+
+通过迭代方法直接求解最优值函数的方法叫做 Value Iteration
+
+#算法步骤
 
 对当前步 $v_k$, 求解: $v_{k+1}=f(v_k)=max_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)$
 
 * Policy Update: 求解 $\pi_{k+1}=argmax_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)$
-* Value update: 将 $\pi_{k+1}$ 代入赋值式: $v_{k+1}=r_{\pi_{k+1}}+{\gamma}P_{\pi_{k+1}}v_k$
+* Value Update: 将 $\pi_{k+1}$ 代入赋值式: $v_{k+1}=r_{\pi_{k+1}}+{\gamma}P_{\pi_{k+1}}v_k$
 
 ###### Note: 基于 Bellman Equation 和 $\mathbb{M}$ 的 $QVA$ 互推
 
@@ -333,7 +349,11 @@ $V(s)=\mathbb{E}_{a\backsim \pi_{\theta}(a|s)}[Q(s,a)]$
 
 $A(s, a) = Q(s, a) - V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]-V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')-V(s)]$
 
-##### 其他概念
+#### 高度概念汇总
+
+如题, 统一汇总学习过程中常见/重要/基础的高级别概念
+
+在细节内容中涉及到时也会再次提及并结合上下文进行实例分析
 
 ###### Model-Based & Model-Free
 
@@ -362,27 +382,63 @@ $A(s, a) = Q(s, a) - V(s) = \mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V
     * 使用 $\theta_{ref}$ 生成 $\mathbb{D}$, 然后用 $\mathbb{D}$ 更新目标策略 $\theta$
   * 一般数据可以多次复用
 
+###### On-line & Off-line
+
+aaa
+
+###### Exploration & Exploitation
+
+...
+
 ###### Stochastic Approximation
 
 详见 RL-math 第六章, 数学基础
 
-#### RL 方法概论
+主要用于, 求解定义在求随机变量期望框架下的值函数估计 estimation
+
+如, 估计 $v_{\pi}(s)$, 可以定义: 
+
+$\omega^* = \mathbb{E}[R_{t+1}+{\gamma}v_{\pi}(S_{t+1})|S_t=s]$
+
+$\Delta=\omega-\omega^*$
+
+套入 Dvoretzky 框架进行迭代求解
+
+理论层面的深入分析对数学的要求意外的高
+
+随机过程, 测度论, 实分析, 泛函分析... 大一数学三件套的进阶
+
+关于如何使用RM解决实际问题:
+
+当我们希望esti一个随机变量, 直接套, 然后证明是否能吃框架的保票
+
+不行的话, 可以进一步试试更general的Dvo框架
+
+###### Bootstraping
+
+...
+
+###### Functional Approximation
+
+...
+
+#### Algos: RL 方法概论
 
 ##### [0] Dynamic Programming
 
-Dynamic Programming: 给定 Model, 可直接使用于策略学习
+特点在于能直接使用 Env Model 的函数
 
-基于给定模型使用 BOE 思想的最优策略求解方法
+基于给定 Env Model 和 BOE 思想的最优策略求解方法
 
-###### Value Iteration
+###### Value Iteration (VI)
 
-基于 BOE, 通过迭代值函数的方式进行求解
+实际上就是求解 BOE, 通过迭代值函数的方式求解最优值函数
 
 * 任意初始 $v_0$, 迭代收敛到 $v^*$ 使得 $v^*=f(v^*)$ 等式成立
 
   $\text{init $v_0$},iter:v_{k+1}=f(v_k),k=0,1,2,\ldots$
 
-算法步骤
+#算法步骤
 
 任意初始 $v_0$, 给定当前 $v_k$, iter: $v_{k+1}=f(v_k)=max_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)$
 
@@ -392,9 +448,13 @@ Dynamic Programming: 给定 Model, 可直接使用于策略学习
 
 * Step 2: Value Update: 
 
+  不是 Evaluation, 因为我们并没有求解合法值函数, 这是一个 estimation
+
   将 $\pi_{k+1}$ 代入赋值式: $v_{k+1}=max_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)=r_{\pi_{k+1}}+{\gamma}P_{\pi_{k+1}}v_k$
 
-算法实现 -- element-wise form
+#算法实现
+
+element-wise form
 
 给定当前 $v_k$ 
 
@@ -410,69 +470,75 @@ Dynamic Programming: 给定 Model, 可直接使用于策略学习
 
 $v_k$ 是求解目标 $v^*$ 过程中的中间状态变量, 标识求解 $v^*$ 第k次迭代的变量的中间值, 同样 $q_k$ 也只是工具变量
 
-###### Policy Iteration
+###### Policy Iteration (PI)
 
-类似于 Value Iteration, 不过 Policy Iter 每次迭代中会求解出当前策略合法的值函数, 再基于此进行策略优化
+重要的最优策略求解框架
 
-算法步骤
+类似于 VI, 不过 PI **每次迭代中会求解出当前策略合法的值函数**, 基于合法值函数此进行 PU
+
+#算法步骤
 
 init $\pi_0$, 给定当前策略 $\pi_k$
 
-* Step 1: Policy Evaluation: $v_{\pi_k}=r_{\pi_k}+{\gamma}P_{\pi_k}v_{\pi_k}$
+* Step 1: Policy Evaluation (PE): $v_{\pi_k}=r_{\pi_k}+{\gamma}P_{\pi_k}v_{\pi_k}$
 
-  Policy Eva, 使用迭代方法求解 $\pi_k$ 的值函数 $v_{\pi_k}$, $v_{\pi},q_{\pi}$下标代表该值函数是有对应策略的合法值函数
+  PE, 使用 Bellman Equ 迭代方法求解 $\pi_k$ 的值函数 $v_{\pi_k}$, $v_{\pi},q_{\pi}$下标代表该值函数是有对应策略的合法值函数
 
   迭代直到 $v_{\pi_k}^{j}$ 收敛, 然后由 $v_{\pi_k}$ 推导得到 $q_{\pi_k}$
 
-* Step 2: Policy Improvement: $\pi_{k+1}=argmax_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_{\pi})$
+* Step 2: Policy Update (Improvement) (PU): $\pi_{k+1}=argmax_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_{\pi})$
 
-  同 Policy Update, 不过这里使用的是合法的值函数
+  这里使用的是合法的值函数
 
   ${\forall}s,{\pi}_{k+1}(s)=arg~max_{\pi}{\sum}_{a}{\pi}(a|s){{\sum}_{s'}p(s'|s,a)[r(s,a,s')+{\gamma}v_{\pi_k}(s')]}=arg~max_{\pi}{\sum}_{a}{\pi}(a|s)q_{\pi_k}(s,a)$
 
   可以观察到, 在更新策略的过程中我们实际上使用的是 $q_{\pi_k}(s,a)$ 作为更新的依据
 
-算法实现 -- element-wise form
+#算法实现 -- element-wise form
 
 给定当前策略 $\pi_k$
 
 * Step 1: Policy Evaluation: 
 
-  $iter:{\forall}s,v_{\pi_k}^{j+1}(s)={\sum}_a{\pi}(a|s){\sum}_{s'}[r(s,a,s')+{\gamma}v_{\pi_k}^j(s')],{\text{until converge($j{\geq}n$ or $||v_{\pi_k}^{j+1}-v_{\pi_k}^j||{\leq}{\epsilon}$)}}$
+  iter: ${\forall}s,v_{\pi_k}^{j+1}(s)={\sum}_a{\pi}(a|s){\sum}_{s'}[r(s,a,s')+{\gamma}v_{\pi_k}^j(s')],{\text{until converge($j{\geq}n$ or $||v_{\pi_k}^{j+1}-v_{\pi_k}^j||{\leq}{\epsilon}$)}}$
 
   计算 $q_{\pi_k}(s,a)$: ${\forall}(s,a),q_{\pi_k}(s,a)={\sum}_{s'}p(s'|s,a)[r(s,a,s')+{\gamma}v_{\pi_k}(s')]$
 
-* Step 2: Policy Improvement: 
+* Step 2: Policy Update
 
   ${\forall}s,{\pi}_{k+1}(s)=arg~max_{\pi}{\sum}_{a}{\pi}(a|s){{\sum}_{s'}p(s'|s,a)[r(s,a,s')+{\gamma}v_{\pi_k}(s')]}=arg~max_{\pi}{\sum}_{a}{\pi}(a|s){q_{\pi_k}(s,a)}$
 
 ###### Truncated Policy Iteration
 
-本质操作
+观察 VI 和 PI, 其本质差异在于 PU/PE 步骤对当前策略的值函数的求解精度, 是一个粗略高误差的 estimation 还是合法的值函数
 
-* N-times Policy Evaluation (Value Update)
+当精度最低时, 我们仅进行一次 PE 迭代
 
-  N次迭代 Bellman Equation 求解当前策略值函数(不一定求出真实值函数, 大概即可)
+* N-times PE iter (Value Update)
+
+  N次迭代 PE, estimate 当前策略的值函数
   
-* Policy Improvement (Policy Update)
+* PU
 
-  使用已有的值函数(不一定合法)对当前策略进行优化 (argmax 操作)
+  使用得到的 estimator (精度取决于N) 对当前策略进行优化 (argmax 操作)
 
-###### General Policy Iteration GPI
+###### ⭐General Policy Iteration (GPI)
 
-泛指有着类似 PI 形式的一类策略迭代优化方法
+泛指, 有着类似 PI 形式的, 迭代优化策略方法框架
 
-具体为, 此类方法可以概括为两个步骤
+#框架
 
-* Step 1: Policy Evaluation
+此类方法可以概括为两个步骤
 
-  求出当前策略的值函数
+* Step 1: PE
 
-* Step 2: Policy Improvement
+  使用 estimator 估计策略, 目标是最终得到动作值函数的 estimation
 
-  基于当前策略的值函数, 优化策略
+* Step 2: PU
 
-##### [Base] 蒙特卡洛 *Monte-Carlo* MC
+  基于 estimator 优化策略
+
+##### [Base] 蒙特卡洛 Monte-Carlo MC
 
 基于 大数定理, 我们可以通过采样来估计期望值, 由此来进行基于数据的无模型的学习
 $$
@@ -482,22 +548,26 @@ $$
 \end{align}
 $$
 
-通过 MC 的得到的估计值是一个无偏估计
+通过 MC 的得到的 estimation 是一个无偏估计
 
 ###### MC-Basic
 
-由于没有模型, 观察 PI 的策略优化过程, 可以发现, 能够通过 $q_{\pi_k}(s,a)$ 避免显式使用模型
+基于 Policy Iteration 的无模型方法
 
-同时, 由于没有模型, 也无法通过状态值函数推导动作值函数: $Q(s,a)=\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
+由于没有模型, 也无法通过状态值函数推导动作值函数: $q_{\pi}(s,a)=\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V(s')]$
 
-所以, 在这里我们通过 MC 直接求 $q_{\pi_k}(s,a)$, 绕过状态值函数, 使用 $q_{\pi_k}(s,a)$ 进行策略优化
+同时, 观察 PI 的策略优化过程, 可以发现, 能够通过 $q_{\pi_k}(s,a)$ 避免显式使用模型 ${\forall}s,{\pi}_{k+1}(s)=arg~max_{\pi}{\sum}_{a}{\pi}(a|s){q_{\pi_k}(s,a)}$
 
-算法步骤
+所以, 在 Model-free 的 PI 中, 通过 MC 直接求 $q_{\pi_k}(s,a)$, 然后在 PI 阶段直接使用 $q_{\pi_k}(s,a)$ 进行策略优化
+
+#算法步骤
 
 * 给定策略 $\pi$
 
-  ${\forall}(s,a){\in}S{\times}A,sample:q_k(s,a)=\frac{1}{N}\sum_{i=1}^Ng(s,a)$
+  ${\forall}(s,a){\in}S{\times}A,\text{with N samples: }q_k(s,a)\approx\frac{1}{N}\sum_{i=1}^Ng(s,a)$
 
+  $q_k$ 标识第 k 次迭代的估计. $g(s,a)$ 标识采样得到的折扣后回报
+  
   对每个 $(s,a)$ pair, 均需要进行充分次数的采样, 然后以此估计 $q(s,a)$
   
   然后基于 $q(s,a)$, 更新策略 ${\forall}s,\pi_{k+1}(s)=argmax_a[q(s,a)]$
@@ -518,30 +588,67 @@ $$
 
 ##### [Base] 时序差分 *Temporal Difference* TD
 
-基于单步采样, 逐步引入真实信息
+理论基础: Stochastic Approximation, Stochastic Sequence Convergence
 
-* 方差小
-* 由于依赖于估计值 偏差大
+Also based on Policy Improvement
 
-##### [1] Value-Based Roadmap $Q(s,a)$
+基本框架仍然是 GPI:
 
-> 适用于离散有限动作域$A$
+* PE:
+
+  核心在于, 通过 Stochastic Approximation 的方法进行 PE
+
+  数学基础是, 直接使用 Bellman + 期望定义, 然后引入 Stochastic Approximation 迭代求解 $q_\pi$
+
+* PU:
+
+  同 GPI, 基于 $q_\pi$ 优化
+
+###### TD-Basic
+
+###### SARSA
+
+###### Taular Q
+
+#算法实现:
+
+对于一步采样$(s,a,s',r)$(数据可复用, off-policy)
+
+* $target:r+\gamma {max}_{a'}Q_k(s',a')$
+* $update:Q_{k+1}(s,a)\leftarrow Q_k(s,a)+\alpha(target-Q_k(s,a))$
+
+##### [1] Value-Based Roadmap
+
+> 对 $S$ 无特定要求, 适用于离散有限动作域 $A$
 >
-> 由于可选动作有限, 决策时直接带入所有Action, 选择Q最大的Action即可
+> Implementation 中常设计Q网络的输出段大小为 $|A|$ , 选择输出值最大的Action即可
 
-###### Increment Idea: Tabular Q-Learning
+Value-Based 在于对策略的优化都是基于值函数的指导的
 
-* 用于离散$S$+离散$A$
+之前的内容也都属于 Value-Based
 
-* Sampling+Bellman: 
-  
-  $Q_{\pi_{\theta}}(s,a)=\underbrace{\Bbb E_{s^{'}\backsim p(s^{'}|s, a)}}_{where~sampling~works}[r(s, a, s^{'}) + \gamma \Bbb E_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]]$
-  
-  * $\gamma \Bbb{E}_{a^{'}\backsim \pi_{\theta}(a'|s')}[Q(s',a')]$部分在算法中会默认选择最优Action
-  
-* 对于一步采样$(s,a,s',r)$(数据可复用, off-policy)
-  * $target:r+\gamma {max}_{a'}Q_k(s',a')$
-  * $update:Q_{k+1}(s,a)\leftarrow Q_k(s,a)+\alpha(target-Q_k(s,a))$
+其特点是: 基于**值函数**, 进行**迭代式**的更新
+
+主要套路则在于, 如何进行 PE 步骤. PI 步骤则较为简单, 基于动作值函数进行max更新即可.
+
+#PE 步骤 -- 如何得到值函数
+
+* DP: 在有 Env 模型的情况下, 基于 Bellman Equation 求解值函数
+* Model-Free 在没有模型的情况下, 通过**期望形式**的值函数定义进行求解
+  * 核心就是, 如何求 $\mathbb{E}[X]$
+  * Monte-Carlo: 基于大数定理, 进行多次采样计算平均值求解
+  * TD: 基于 Stochastic Approximation Theory, 
+* Model-Based: TBD
+
+对E[X]的求解方式
+
+* 基于定义 sum_x p(x)x
+* 基于MC
+  * 大数定理
+  * 大量sample求平均
+* 基于SA
+  * incremental
+  * 迭代算法
 
 ###### Deep Q-Learning DQN
 
@@ -577,35 +684,15 @@ $$
   * 构建一个经验池来去除数据相关性, 同时提高数据利用率 -- off-policy
   * 实践中即为Replay-Buffer: $(s,a,s',r,terminal)$
 
-##### [2] Actor-Critic Roadmap
+###### More: Double, Dueling, Rainbow...
 
-结合值函数网络和策略网络, 解决了$A$无限的问题
+Such advanced variants are complicated and rely heavily on engineering implementation. 
 
-###### DDPG *Deep Deterministic Policy Gradient*
+Consequently they fall outside the scope of 'RL Basics' and are excluded here
 
-> paper: https://arxiv.org/abs/1509.02971
->
-> code:todo
+Maybe 'Papers Reading' serves better as the stage.
 
-###### A3C *AAA C*
-
-> paper: https://arxiv.org/abs/1602.01783
->
-> code: todo
-
-###### SAC *Soft Actor-Critic*
-
-> paper: https://arxiv.org/abs/1801.01290
->
-> code: todo
-
-###### TD3
-
-> paper: https://arxiv.org/abs/1802.09477
->
-> code: todo
-
-##### [3] ⭐ Policy-Based Roadmap $\pi_\theta(a|s)$
+##### [2] ⭐ Policy-Based Roadmap $\pi_\theta(a|s)$
 
 > 需要注意的是, 相较于 Value-Based, Policy-Based 有着更小的定义域, 更平滑的计算空间
 
@@ -665,14 +752,18 @@ $$
 
 Monte-Carlo Policy Gradient
 
-* 算法
-  * 在策略$\pi_\theta$下采样N条轨迹(典型on-policy)
-  * $计算梯度:\nabla_{\theta}J(\theta)=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)$
-  * $Gradient~Ascent:\theta'\leftarrow\theta+\alpha\nabla J(\theta)$
-  * 重复至收敛
-* 实践中定义loss为负数, 以便使用GD工具
-  * $loss=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\log \pi_{\theta}(a_t^n|s_t^n)$
-  * $GD: \theta'\leftarrow\theta-\alpha\nabla loss$
+#算法
+
+* 在策略$\pi_\theta$下采样N条轨迹(典型on-policy)
+* $计算梯度:\nabla_{\theta}J(\theta)=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)$
+* $Gradient~Ascent:\theta'\leftarrow\theta+\alpha\nabla J(\theta)$
+* 重复至收敛
+
+#实践中定义loss为负数, 以便使用GD工具
+
+* $loss=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\log \pi_{\theta}(a_t^n|s_t^n)$
+* $GD: \theta'\leftarrow\theta-\alpha\nabla loss$
+
 * with baseline
 
 ###### Natural Policy Gradient
@@ -687,7 +778,7 @@ Fisher 信息矩阵 FIM
 
 
 
-###### $\cal{Policy~Improvement}$ TRPO *Trust Region Policy Optimization*
+###### Trust Region Policy Optimization (TRPO)
 
 > paper:
 >
@@ -736,7 +827,7 @@ Why
   * 计算困难(矩阵运算)
   * DNN本身不适合限制问题
 
-###### **PPO** *Proximal Policy Optimization*
+###### Proximal Policy Optimization (PPO)
 
 > paper: https://arxiv.org/abs/1707.06347
 >
@@ -744,33 +835,31 @@ Why
 
 基于TRPO思想的工程上的可行高效实现
 
-* 重要性采样
-  $$
-  \begin{align} 
-  \mathbb{E}_{x\backsim p(x)}(f(x))
-  	&=\sum_{x\backsim p(x)}{p(x)f(x)}\\
-  	&=\sum_{x\backsim p(x)}{p(x)f(x)\frac{q(x)}{q(x)}}\\
-  	&=\sum_{x\backsim q(x)}{q(x)[f(x)\frac{p(x)}{q(x)}]}\\
-  	&=\mathbb{E_{x\backsim q(x)}}[f(x)\frac{p(x)}{q(x)}]\\
-  	&\approx\frac{1}{N}\sum_{n=0}^{N-1}[f(x)\frac{p(x)}{q(x)}]_{x\backsim q(x)}\\
-  \end{align}
-  $$
-  
-* 公式推导 *从Policy Gradient Loss的替代优化到重要性采样*
-  $$
-  \begin{align}
-  \nabla_{\theta}J(\theta)
-      &=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
-  	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_\theta(s_t^n, a_t^n)\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)&引入A^{GAE}_\theta优化方差偏差\\
-  	&引入重要性采样,局部off-policy化\\
-  	&\theta:Training-Policy;\theta':Ref-Policy\\
-  	&此时使用的轨迹数据由\theta'采样得到\\
-  	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_{\theta'}(s_t^n, a_t^n)\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
-  	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_{\theta'}(s_t^n, a_t^n)\frac{\nabla_{\theta}\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}&\nabla\log f(x)=\frac{\nabla f(x)}{f(x)}\\
-  \end{align}
-  $$
-  
-* Loss处理
+#重要性采样
+$$
+\begin{align} 
+\mathbb{E}_{x\backsim p(x)}(f(x))
+	&=\sum_{x\backsim p(x)}{p(x)f(x)}\\
+	&=\sum_{x\backsim p(x)}{p(x)f(x)\frac{q(x)}{q(x)}}\\
+	&=\sum_{x\backsim q(x)}{q(x)[f(x)\frac{p(x)}{q(x)}]}\\
+	&=\mathbb{E_{x\backsim q(x)}}[f(x)\frac{p(x)}{q(x)}]\\
+	&\approx\frac{1}{N}\sum_{n=0}^{N-1}[f(x)\frac{p(x)}{q(x)}]_{x\backsim q(x)}\\
+\end{align}
+$$
+#公式推导 *从Policy Gradient Loss的替代优化到重要性采样*
+$$
+\begin{align}
+\nabla_{\theta}J(\theta)
+    &=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}G_t^n\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
+	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_\theta(s_t^n, a_t^n)\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)&引入A^{GAE}_\theta优化方差偏差\\
+	&引入重要性采样,局部off-policy化\\
+	&\theta:Training-Policy;\theta':Ref-Policy\\
+	&此时使用的轨迹数据由\theta'采样得到\\
+	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_{\theta'}(s_t^n, a_t^n)\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}\nabla_{\theta}\log \pi_{\theta}(a_t^n|s_t^n)\\
+	&=\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}A^{GAE}_{\theta'}(s_t^n, a_t^n)\frac{\nabla_{\theta}\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}&\nabla\log f(x)=\frac{\nabla f(x)}{f(x)}\\
+\end{align}
+$$
+#Loss处理
 $$
 \begin{align}
   Loss
@@ -780,23 +869,36 @@ $$
   \end{align}
 $$
 
-* Loss GD
-  * $Loss_{PolicyNet}=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}\min({A^{GAE}_{\theta'}\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}},{clip(\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)},1-\epsilon, 1+\epsilon)}A^{GAE}_{\theta'})$
-  * $Loss_{ValueNet}=MSE(TD\_target, V(s_t))$
+#Loss GD
 
-###### GRPO *Group Relative Policy Optimization*
+* $Loss_{PolicyNet}=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}\min({A^{GAE}_{\theta'}\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}},{clip(\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)},1-\epsilon, 1+\epsilon)}A^{GAE}_{\theta'})$
+* $Loss_{ValueNet}=MSE(TD\_target, V(s_t))$
 
-> paper:
+##### [3] Actor-Critic Roadmap
 
-End of policy series
+结合值函数网络和策略网络
 
-优化掉$V(s)$, 对每组采样计算均值作为baseline
+###### DDPG *Deep Deterministic Policy Gradient*
 
-##### [4] Model-Based Roadmap
+> paper: https://arxiv.org/abs/1509.02971
+>
+> code:todo
 
-通过 $\mathbb{D}$ 训练出一个对环境的预测模型(然后将此模型带入到原始的 Bellman中?)
+###### A3C *AAA C*
 
-###### World Model
+> paper: https://arxiv.org/abs/1602.01783
+>
+> code: todo
 
-> paper:https://arxiv.org/abs/1803.10122
+###### SAC *Soft Actor-Critic*
+
+> paper: https://arxiv.org/abs/1801.01290
+>
+> code: todo
+
+###### TD3
+
+> paper: https://arxiv.org/abs/1802.09477
+>
+> code: todo
 
