@@ -18,6 +18,8 @@ Basic, basic...
 
 #### Fundamental: RL 基础概念 & 工具
 
+后续一切内容的基础和框架
+
 ##### RL定义 & Markov 框架
 
 $$
@@ -31,21 +33,23 @@ RL的普遍目标: 学习 **Optimal Policy** $\pi^*_{\theta}$ --  实现最大�
 
 * 交互: Agent 依据其策略 $\pi_\theta$ 在观察到的 State 选择 Action, 进行**状态转移**并获得Reward的过程
 
-  Agent 根据**反馈信息**($s', r$) 学习
+Agent 根据**反馈信息**($s', r$) 学习
 
 ###### ⭐**马尔可夫决策过程** Markov Decision Process (MDP)
 
-RL 一般将问题建模为MDP: Markov(M) + Policy(D) + Space(P)
+RL 一般将问题建模为MDP: Markov Property(Markov) + Policy(Decision) + Space & Trajectory(Process)
 
 这是我们在讨论RL问题时的世界观
 
-Markov特性: **历史无关** (Memoryless)
+Markov Property: **历史无关** (Memoryless)
 
 * 状态转移仅取决于系统**当前**状态和动作, 与系统过去或未来任意状态动作都不相关
 
 * $p(s'|s,a)$ 状态转移的输出只与输入的当前的s和a有关, 与之前任意步的s和a无关
 
   $p(s_{t+1}|s_t,a_t)=p(s_{t+1}|s_0,a_0,s_1,a_1,\ldots,s_t,a_t)$
+
+当策略确定时, MDP 退化成一个 Markov Process.
 
 ###### 空间 Space
 
@@ -698,7 +702,7 @@ Maybe 'Papers Reading' serves better as the stage.
 
 > 需要注意的是, 相较于 Value-Based, Policy-Based 有着更小的定义域, 更平滑的计算空间
 
-###### [$\cal{Base}$] 策略梯度推导 Policy Gradient
+###### [Base] Policy Gradient 策略梯度推导
 
 不同于 Value-Based 方法利用值函数 $V,Q,A$ 作为评估改进策略的依据
 
