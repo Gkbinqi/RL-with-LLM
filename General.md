@@ -18,7 +18,7 @@ Basic, basic...
 
 #### Fundamental: RL 基础概念 & 工具
 
-后续一切内容的基础和框架
+后续内容的基础和框架
 
 ##### RL定义 & Markov 框架
 
@@ -31,15 +31,15 @@ RL问题可以描述为: Agent 从与 Environment 的**交互**历史信息中 �
 
 RL的普遍目标: 学习 **Optimal Policy** $\pi^*_{\theta}$ --  实现最大化期望回报 $J(\theta)$ 
 
-* 交互: Agent 依据其策略 $\pi_\theta$ 在观察到的 State 选择 Action, 进行**状态转移**并获得Reward的过程
-
-Agent 根据**反馈信息**($s', r$) 学习
+* 交互: Agent 依据其策略 $\pi_\theta$ 在观察到的 State 选择 Action, 完成**状态转移**并获得 Reward 的过程
 
 ###### ⭐**马尔可夫决策过程** Markov Decision Process (MDP)
 
-RL 一般将问题建模为MDP: Markov Property(Markov) + Policy(Decision) + Space & Trajectory(Process)
+RL 一般将问题建模为 MDP
 
-这是我们在讨论RL问题时的世界观
+MDP 有三要素: Markov Property(Markov) + Policy(Decision) + Space & Trajectory(Process)
+
+MDP 是我们在讨论RL问题时的世界观, 我们的概念都是在该框架下定义推演的
 
 Markov Property: **历史无关** (Memoryless)
 
@@ -161,7 +161,7 @@ $J(\theta)=\mathbb{E}_{\tau\backsim p_{\theta}(\tau)}[G(\tau)]=\mathbb{E}_{\tau\
 
 ##### 值函数定义
 
-我们定义, 在给定的马尔可夫环境中, 每一个策略都有对应的**价值函数**, 该函数能够计算出从输入状态开始, 执行**当前策略**到结束时能获得的**期望回报**
+我们定义, 在给定的 MDP 中, 每一个策略都有对应的**价值函数**, 该函数输入当前状态, 输出从输入状态开始, 执行**当前策略**到结束能获得的**期望回报**
 
 这一定义得到了数学和实验层面的验证, 值函数确实存在且可求解
 
@@ -177,9 +177,7 @@ Def: $v_{\pi}(s) = \mathbb{E}_{\tau\backsim p_\theta(\tau)}[G_t|s_t = s]$
 
 #函数性质: 
 
-状态值函数是接收 s 作为输入的函数
-
-状态值函数是基于 Policy 的函数
+状态值函数是接收 s 作为输入, 基于 Policy 的函数
 
 $v_\pi(s) \iff v(s; \pi_\theta)$
 
@@ -191,9 +189,7 @@ Def: $q_{\pi}(s,a)=\mathbb{E}_{\tau\backsim p(\tau)}[G_t|S_t = s,A_t=a]$
 
 #函数性质
 
-动作值函数是接收 $(s,a)$ 作为输入的函数
-
-动作值函数是基于 Policy 的函数
+动作值函数是接收 $(s,a)$ 作为输入, 基于 Policy 的函数
 
 $q_\pi(s,a) \iff q(s,a; \pi_\theta)$
 
@@ -211,9 +207,9 @@ Bellman 公式 提供了求解值函数的工具
 
 ###### 贝尔曼公式 Bellman Equation (Bellman Equ)
 
-贝尔曼公式描述了合法值函数之间的依赖关系
+贝尔曼公式描述了策略的合法值函数之间的依赖关系
 
-给定策略 $\theta$ 和 $\mathbb{M}$, $\theta$ 合法的值函数能够通过递归的方式表示
+给定策略 $\pi$ 和 $\mathbb{M}$, 策略的值函数能够通过递归的方式表示
 
 #状态值函数: $\forall s{\in}S,{v}_{\pi}(s) = \mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+\gamma V_{\theta}(s')]$ 
 $$
@@ -290,7 +286,7 @@ ${\forall}s,v_{k+1}(s)=\sum_{a\backsim\pi_{\theta}(a|s)}{\pi_\theta(a|s)}\sum_{s
 
 ###### 贝尔曼最优公式 Bellman Optimality Equation (BOE)
 
-基于策略的值函数, 我们可以此作为评估依据优化策略以逼近目标 -- $\pi^*_\theta$
+基于值函数的概念, 我们可以此优化策略以逼近目标 -- $\pi^*_\theta$
 
 首先定义目标 Optimal Policy, Optimal State Value 为何
 
@@ -300,7 +296,7 @@ ${\forall}s,v_{k+1}(s)=\sum_{a\backsim\pi_{\theta}(a|s)}{\pi_\theta(a|s)}\sum_{s
 
 #BOE定义:
 
-* BOE: $v(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}v(s')]= max_{\pi}\sum_{a{\backsim}{\pi}(a|s)}{\pi}(a|s)Q(s,a)$
+* BOE: $v(s) = max_\pi\mathbb{E}_{a\backsim\pi_{\theta}(a|s)}\mathbb{E}_{s'\backsim p(s'|s,a)}[r(s,a,s')+{\gamma}v(s')]= max_{\pi}\sum_{a{\backsim}{\pi}(a|s)}{\pi}(a|s)q(s,a)$
 
   Matrix Vector Form: $v=max_{\pi}(r+{\gamma}Pv)=f(v)$
   
@@ -327,18 +323,18 @@ ${\forall}s,v_{k+1}(s)=\sum_{a\backsim\pi_{\theta}(a|s)}{\pi_\theta(a|s)}\sum_{s
 * $v^*$存在且唯一
 * $\pi^*$ 存在, 可能为多个
 * 存在至少一个$\mu^*$
+* BOE 可通过迭代的方式求解
 
 #算法步骤
 
-基于 Fixed Point Theorem, 可以证明 BOE 可通过迭代的方式求解
+任意初始 $v_0$, 对当前步 $v_k$, 迭代: $v_{k+1}=f(v_k)=max_{\pi}(r_{\pi}+{\gamma}P_{\pi}v_k)$
 
-* 任意初始 $v_0$, 迭代收敛到 $v^*$ 使得 $v^*=f(v^*)$ 等式成立
-
-  $\text{init $v_0$},iter:v_{k+1}=f(v_k),k=0,1,2,\ldots$
+* init $v_0$ 
+* iter: $v_{k+1}=f(v_k)\text{ until converge, }k=0,1,2,\ldots$
 
 ###### 值迭代 Value Iteration (VI) -- Solving BOE
 
-通过迭代方法直接求解最优值函数的方法叫做 Value Iteration
+即复制 BOE 求解, 通过迭代方法直接求解最优值函数
 
 #算法步骤
 
@@ -394,39 +390,13 @@ aaa
 
 ###### Exploration & Exploitation
 
-...
+RL 中常见的平衡
 
-###### Stochastic Approximation
+Exploitation: 利用已有的信息高效利用高价值动作, 但是可能导致被困在次优解
 
-详见 RL-math 第六章, 数学基础
+Exploration: 探索目前看来次优的动作, 以发现潜在的更优的动作, 但短期内会导致奖励的降低
 
-主要用于, 求解定义在求随机变量期望框架下的值函数估计 estimation
-
-如, 估计 $v_{\pi}(s)$, 可以定义: 
-
-$\omega^* = \mathbb{E}[R_{t+1}+{\gamma}v_{\pi}(S_{t+1})|S_t=s]$
-
-$\Delta=\omega-\omega^*$
-
-套入 Dvoretzky 框架进行迭代求解
-
-理论层面的深入分析对数学的要求意外的高
-
-随机过程, 测度论, 实分析, 泛函分析... 大一数学三件套的进阶
-
-关于如何使用RM解决实际问题:
-
-当我们希望esti一个随机变量, 直接套, 然后证明是否能吃框架的保票
-
-不行的话, 可以进一步试试更general的Dvo框架
-
-###### Bootstraping
-
-...
-
-###### Functional Approximation
-
-...
+Exploration 非常重要, 但同时很多情况下局部最优解也是可接受的, 不一定要追求最优解
 
 #### Algos: RL 方法概论
 
@@ -690,14 +660,6 @@ Value-Based 在于对策略的优化都是基于值函数的指导的
   * 构建一个经验池来去除数据相关性, 同时提高数据利用率 -- off-policy
   * 实践中即为Replay-Buffer: $(s,a,s',r,terminal)$
 
-###### More: Double, Dueling, Rainbow...
-
-Such advanced variants are complicated and rely heavily on engineering implementation. 
-
-Consequently they fall outside the scope of 'RL Basics' and are excluded here
-
-Maybe 'Papers Reading' serves better as the stage.
-
 ##### [2] ⭐ Policy-Based Roadmap $\pi_\theta(a|s)$
 
 > 需要注意的是, 相较于 Value-Based, Policy-Based 有着更小的定义域, 更平滑的计算空间
@@ -771,18 +733,6 @@ Monte-Carlo Policy Gradient
 * $GD: \theta'\leftarrow\theta-\alpha\nabla loss$
 
 * with baseline
-
-###### Natural Policy Gradient
-
-> paper:
-
-$\theta$的欧几里得距离$||\theta-\theta'||^2_2$不能很好的反映作为概率分布的$\pi_\theta$的实际变动
-
-采用KL divergance作为指标, 使用二阶指标以测度策略的真实变动
-
-Fisher 信息矩阵 FIM
-
-
 
 ###### Trust Region Policy Optimization (TRPO)
 
@@ -879,32 +829,4 @@ $$
 
 * $Loss_{PolicyNet}=-\frac{1}{N}\sum_{n=0}^{N-1}\sum_{t=0}^{T_n-1}\min({A^{GAE}_{\theta'}\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)}},{clip(\frac{\pi_{\theta}(a_t^n|s_t^n)}{\pi_{\theta'}(a_t^n|s_t^n)},1-\epsilon, 1+\epsilon)}A^{GAE}_{\theta'})$
 * $Loss_{ValueNet}=MSE(TD\_target, V(s_t))$
-
-##### [3] Actor-Critic Roadmap
-
-结合值函数网络和策略网络
-
-###### DDPG *Deep Deterministic Policy Gradient*
-
-> paper: https://arxiv.org/abs/1509.02971
->
-> code:todo
-
-###### A3C *AAA C*
-
-> paper: https://arxiv.org/abs/1602.01783
->
-> code: todo
-
-###### SAC *Soft Actor-Critic*
-
-> paper: https://arxiv.org/abs/1801.01290
->
-> code: todo
-
-###### TD3
-
-> paper: https://arxiv.org/abs/1802.09477
->
-> code: todo
 
