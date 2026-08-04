@@ -6,4 +6,5 @@
 
 关注: 数学原理 & 概念 & 基础算法
 
-Wed 2026.2.4
+BinqiTianshengzi
+2026.8.04 Tues
